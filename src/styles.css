@@ -12,7 +12,7 @@ body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; overflow: hidden
 .ko-sheet-urgent { color: #c4173f; font-weight: 600; }
 .ko-sheet-in button { margin-top: 8px; padding: 10px 16px; border: 0; border-radius: 10px; background: #271b3f; color: #fff; font: inherit; cursor: pointer; }
 .ko-urgent { font-size: 14px; }
-/* Rilis 54: Kantor agen (src/pages/Office.tsx, components/office/OfficeScene.tsx) */
+/* Kantor AI: label, gelembung, HUD, Mission Board */
 .ko {
   display: grid;
   gap: 16px;
