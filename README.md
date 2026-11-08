@@ -39,7 +39,7 @@ Tips: biar cepat, buka folder ini di Claude Code dan minta, misalnya, "ganti age
 
 ## Sambungkan agen asli
 
-`LAPORAN` di `config.ts` sekarang data contoh. Untuk data asli, isi dari laporan agenmu, misalnya file JSON yang ditulis agen setiap sore atau API sistemmu, lalu muat di `src/App.tsx` (`fetch('/laporan.json')`). Jangan tampilkan nominal uang atau data rahasia kalau videonya mau dibagikan.
+Laporan agen dibaca dari **`src/laporan.json`** (sekarang data contoh). Kuncinya sama dengan `key` di `AGEN`, isinya `ringkasan`, `menunggu`, `mendesak`, dan `angka`. Suruh agenmu (Antigravity, Claude Code, dll.) menulis laporannya ke file ini setiap sore; kantornya langsung berubah. Jangan tampilkan nominal uang atau data rahasia kalau videonya mau dibagikan.
 
 ## Rekam jadi video
 

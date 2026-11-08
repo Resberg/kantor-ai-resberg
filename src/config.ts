@@ -3,6 +3,8 @@
  * Semua yang tampil di kantor diambil dari file ini. Nama dan angka di bawah fiktif.
  */
 
+import laporanAgen from './laporan.json';
+
 export const KANTOR = {
   nama: 'Kantor AI',
   /** Baris kecil di bawah nama (mis. nama perusahaan). */
@@ -71,35 +73,7 @@ export interface Laporan {
  * Laporan hari ini per agen. Ini data contoh; untuk data asli, isi dari API/JSON agenmu (lihat README, "Sambungkan agen
  * asli").
  */
-export const LAPORAN: Record<string, Laporan> = {
-  raka: {
-    ringkasan: 'Enam paket tender baru; dua cocok, satu Rakor Dinas Contoh sedang dikejar.',
-    menunggu: ['Setujui batch email B012 (30 kontak)'],
-    angka: [{ label: 'Paket baru', nilai: '6 paket' }],
-  },
-  sekar: {
-    ringkasan: 'Tiga kampus contoh membalas penawaran; satu minta sampel.',
-    menunggu: ['Kirim sampel ke Kampus Contoh?'],
-    angka: [{ label: 'Calon klien', nilai: '12 kontak' }],
-  },
-  gilang: {
-    ringkasan: 'Brief video Festival Contoh masuk; storyboard awal disiapkan.',
-    mendesak: ['Tenggat penawaran Festival Contoh besok 10.00'],
-  },
-  riska: {
-    ringkasan: '212 email dirapikan; dua email phishing ditandai.',
-    menunggu: ['Periksa draf invoice termin 2'],
-    angka: [{ label: 'Email dilabel', nilai: '212 email' }],
-  },
-  esok: {
-    ringkasan: 'Tiga alternatif konsep Rakor Dinas Contoh selesai.',
-    menunggu: ['Pilih konsep Rakor Dinas Contoh'],
-  },
-  lita: {
-    ringkasan: 'Deck 14 slide Festival Contoh siap ditinjau.',
-    angka: [{ label: 'Desain selesai', nilai: '4 berkas' }],
-  },
-};
+export const LAPORAN: Record<string, Laporan> = laporanAgen;
 
 /** Timelapse: satu hari dalam tiga babak (detik = lama tiap babak di video). */
 export const BABAK = [
