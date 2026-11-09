@@ -44,10 +44,10 @@ t('parameter URL', () => {
   assert.deepEqual(O.params(new URLSearchParams('timelapse=1&rekam=1&jam=08.10')), { lapse: true, rec: true, time: '08:10', alwaysWork: true });
 });
 const G = (await runnerImport(path.join(root, 'src/gaya/daftar.ts'), { root, configFile: false, cacheDir: path.join(os.tmpdir(), 'kantor-vite'), logLevel: 'error' })).module;
-t('12 gaya + asli, urutan pilihan gaya', () => {
-  assert.equal(G.DAFTAR_GAYA.length, 13);
-  assert.equal(new Set(G.DAFTAR_GAYA.map((g) => g.id)).size, 13);
-  assert.equal(G.DAFTAR_GAYA.filter((g) => g.jenis === 'paduan').length, 5);
+t('13 gaya + asli, urutan pilihan gaya', () => {
+  assert.equal(G.DAFTAR_GAYA.length, 14);
+  assert.equal(new Set(G.DAFTAR_GAYA.map((g) => g.id)).size, 14);
+  assert.equal(G.DAFTAR_GAYA.filter((g) => g.jenis === 'paduan').length, 6);
   assert.equal(G.gayaAwal('clay', 'voxel', 'asli'), 'clay');
   assert.equal(G.gayaAwal('ngawur', 'voxel', 'asli'), 'voxel');
   assert.equal(G.gayaAwal(null, null, 'taman'), 'taman');

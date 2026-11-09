@@ -73,7 +73,7 @@ export default function App() {
   const latar = g.latar && (night ? g.latar.malam : g.latar.siang);
 
   return (
-    <div className="ko" data-night={night || g.id === 'menara' || undefined} data-gaya={gaya} style={latar ? { background: latar } : undefined}>
+    <div className="ko" data-night={night || !!g.malam || undefined} data-gaya={gaya} style={latar ? { background: latar } : undefined}>
       <div className="ko-stage">
         <Suspense fallback={<div className="ko-loading">Menyiapkan kantor…</div>}>
           <OfficeScene

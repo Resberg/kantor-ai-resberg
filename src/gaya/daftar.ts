@@ -78,6 +78,7 @@ export const DAFTAR_GAYA = [
     jenis: 'paduan',
     ket: 'Neon malam + kantor di puncak bangunan bertumpuk, tangga zigzag, papan AGEN.',
     latar: { siang: 'radial-gradient(130% 90% at 50% 20%, #1a0b33 0%, #05030f 70%)', malam: 'radial-gradient(130% 90% at 50% 20%, #1a0b33 0%, #05030f 70%)' },
+    malam: true,
   },
   {
     id: 'taman',
@@ -92,6 +93,14 @@ export const DAFTAR_GAYA = [
     jenis: 'paduan',
     ket: 'Voxel + kantor di lantai 13 gedung 30 lantai, beberapa lantai dibuka (cutaway).',
     latar: { siang: 'linear-gradient(#5b6fc8, #ffb47a)', malam: 'linear-gradient(#0a0f2a, #2a1a40)' },
+  },
+  {
+    id: 'hologram',
+    nama: 'Hologram malam',
+    jenis: 'paduan',
+    ket: 'Blueprint malam: lantai grid cyan, dinding kaca, tepi garis cahaya, Mission Board hologram, partikel data.',
+    latar: { siang: 'radial-gradient(130% 90% at 50% 20%, #0a1a33 0%, #03060d 70%)', malam: 'radial-gradient(130% 90% at 50% 20%, #0a1a33 0%, #03060d 70%)' },
+    malam: true,
   },
 ] as const satisfies readonly InfoGaya[];
 

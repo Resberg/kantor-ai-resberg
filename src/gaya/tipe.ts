@@ -11,6 +11,8 @@ export interface InfoGaya {
   latar?: { siang: string; malam: string };
   /** Kabur tilt-shift atas-bawah (miniatur). */
   tiltShift?: boolean;
+  /** UI/HUD selalu mode malam. */
+  malam?: boolean;
 }
 
 /** Pembangun kit gaya (dipanggil tiap scene dibangun; textures & geometri dibuang lagi lewat kit.dispose()). */
