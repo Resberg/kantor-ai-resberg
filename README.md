@@ -37,6 +37,34 @@ Semua ada di **`src/config.ts`**:
 
 Tips: biar cepat, buka folder ini di Claude Code dan minta, misalnya, "ganti agennya jadi 4: Admin, Sales, Desainer, Penulis, jadwalnya …".
 
+## Ganti gaya 3D
+
+Ada 12 gaya selain gaya asli. Gaya *menyeluruh* mengubah bentuk dan bahan semua objek (agen, meja, kursi, monitor, dinding, jendela, tanaman, pohon, tanah, Mission Board). Gaya *paduan* menambah dunia di sekitar kantor; posisi agen dan meja tetap ikut `config.ts`.
+
+| Id | Jenis | Isi |
+|---|---|---|
+| `asli` | bawaan | Bentuk sederhana, warna hangat, paling ringan (default) |
+| `clay` | menyeluruh | Plastisin: sudut membulat, bekas jari, pastel |
+| `felt` | menyeluruh | Kain flanel/wol: serat, warna lembut, jahitan |
+| `voxel` | menyeluruh | Semua objek jadi balok piksel |
+| `vinyl` | menyeluruh | Mainan vinyl mengilap, agen chibi kepala besar |
+| `diorama` | menyeluruh | Miniatur meja: kayu, kain, rumput, alas kayu, tilt-shift |
+| `kayu` | menyeluruh | Balok kayu mainan, agen boneka pasak |
+| `stickman` | menyeluruh | Dunia putih bergaris tinta, agen batang tipis |
+| `pulau` | paduan | Clay + pulau melayang, laut pastel, awan |
+| `toko` | paduan | Lukisan tangan + toko di trotoar, papan nama, lampu jalan |
+| `menara` | paduan | Neon + bangunan bertumpuk, tangga zigzag |
+| `taman` | paduan | Low-poly + paviliun taman, kolam, pergola |
+| `gedung30` | paduan | Voxel + gedung 30 lantai, kantor di lantai cutaway |
+
+Cara pilih:
+- Default: `GAYA` di `src/config.ts`.
+- Sekali buka: `/?gaya=clay` (bisa digabung, mis. `/?gaya=menara&timelapse=1`).
+- Di layar: tombol **Gaya** di pojok kanan bawah (ganti tanpa muat ulang; pilihan terakhir diingat). Sembunyikan dengan `TAMPIL_PEMILIH_GAYA = false`.
+- Rekam: `npm run rekam -- out.mp4 --gaya toko`.
+
+Tiap gaya satu file di `src/gaya/<id>.ts`; daftar namanya di `src/gaya/daftar.ts`. Tekstur dibuat dengan kanvas, tanpa unduhan.
+
 ## Sambungkan agen asli
 
 Laporan agen dibaca dari **`src/laporan.json`** (sekarang data contoh). Kuncinya sama dengan `key` di `AGEN`, isinya `ringkasan`, `menunggu`, `mendesak`, dan `angka`. Suruh agenmu (Antigravity, Claude Code, dll.) menulis laporannya ke file ini setiap sore; kantornya langsung berubah. Jangan tampilkan nominal uang atau data rahasia kalau videonya mau dibagikan.

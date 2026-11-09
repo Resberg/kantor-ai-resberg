@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { KANTOR } from './config';
+import { GAYA, KANTOR, TAMPIL_PEMILIH_GAYA } from './config';
+import { DAFTAR_GAYA, KUNCI_SIMPAN, cariGaya, gayaAwal, type GayaId } from './gaya/daftar';
 import { IDLE_LABEL, idleAt, isNight, isoDay, lapseAt, missionBoard, officeDesks, params as readParams, type DeskState, type IdleSpot } from './office';
 
 const OfficeScene = lazy(() => import('./OfficeScene'));
@@ -17,6 +18,29 @@ export default function App() {
   const drive = useRef<((t: number) => void) | null>(null);
   const anchors = useRef(new Map<string, HTMLElement>());
   const boardAnchor = useRef<HTMLElement | null>(null);
+  const [gaya, setGaya] = useState<GayaId>(() => {
+    let simpanan: string | null = null;
+    try {
+      simpanan = localStorage.getItem(KUNCI_SIMPAN);
+    } catch {
+      /* penyimpanan diblokir: pakai config */
+    }
+    return gayaAwal(new URLSearchParams(location.search).get('gaya'), simpanan, GAYA);
+  });
+  const [pilihBuka, setPilihBuka] = useState(false);
+  const gantiGaya = (id: GayaId) => {
+    setGaya(id);
+    setPilihBuka(false);
+    try {
+      localStorage.setItem(KUNCI_SIMPAN, id);
+    } catch {
+      /* abaikan */
+    }
+    const q = new URLSearchParams(location.search);
+    q.set('gaya', id);
+    history.replaceState(null, '', `${location.pathname}?${q}`);
+  };
+  const g = cariGaya(gaya);
 
   // Scene time (agents walking, bubbles) and, with ?timelapse=1, the office clock. ?rekam=1: window.__koFrame(t).
   useEffect(() => {
@@ -46,9 +70,10 @@ export default function App() {
   const spotKey = withBubble.length ? withBubble[Math.floor(t / 2.5) % withBubble.length]!.desk.key : null;
   const working = desks.filter((d) => ['kerja', 'laporan', 'belajar'].includes(d.doing.activity)).length;
   const idle = desks.filter((d) => d.doing.activity === 'siaga').length;
+  const latar = g.latar && (night ? g.latar.malam : g.latar.siang);
 
   return (
-    <div className="ko" data-night={night || undefined}>
+    <div className="ko" data-night={night || g.id === 'menara' || undefined} data-gaya={gaya} style={latar ? { background: latar } : undefined}>
       <div className="ko-stage">
         <Suspense fallback={<div className="ko-loading">Menyiapkan kantor…</div>}>
           <OfficeScene
@@ -60,8 +85,10 @@ export default function App() {
             cinematic
             manual={p.rec}
             drive={drive}
+            gaya={gaya}
           />
         </Suspense>
+        {g.tiltShift && <div className="ko-tilt" aria-hidden="true" />}
         <div className="ko-layer">
           {desks.map((d) => (
             <Tag
@@ -123,6 +150,26 @@ export default function App() {
           </dl>
         )}
       </aside>
+
+      {TAMPIL_PEMILIH_GAYA && !p.rec && (
+        <nav className="ko-gaya" aria-label="Gaya 3D">
+          {pilihBuka && (
+            <ul>
+              {DAFTAR_GAYA.map((x) => (
+                <li key={x.id}>
+                  <button type="button" aria-pressed={x.id === gaya} title={x.ket} onClick={() => gantiGaya(x.id as GayaId)}>
+                    {x.nama}
+                    {x.jenis === 'paduan' && <small>dunia</small>}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <button type="button" className="ko-gaya-btn" aria-expanded={pilihBuka} onClick={() => setPilihBuka((b) => !b)}>
+            Gaya: {g.nama}
+          </button>
+        </nav>
+      )}
 
       {open && (
         <div className="ko-sheet" role="dialog" aria-label={open.agen.nama} onClick={() => setOpen(null)}>

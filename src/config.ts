@@ -4,12 +4,21 @@
  */
 
 import laporanAgen from './laporan.json';
+import type { GayaId } from './gaya/daftar';
 
 export const KANTOR = {
   nama: 'Kantor AI',
   /** Baris kecil di bawah nama (mis. nama perusahaan). */
   subjudul: 'Perusahaan Contoh',
 };
+
+/**
+ * Gaya 3D kantor (lihat README, "Ganti gaya 3D"): 'asli' | 'clay' | 'felt' | 'voxel' | 'vinyl' | 'diorama' | 'kayu' |
+ * 'stickman' | 'pulau' | 'toko' | 'menara' | 'taman' | 'gedung30'. Bisa ditimpa lewat ?gaya=<id> atau pemilih di layar.
+ */
+export const GAYA: GayaId = 'asli';
+/** Tombol pemilih gaya di pojok kanan bawah. false = sembunyikan (mis. untuk video final). */
+export const TAMPIL_PEMILIH_GAYA = true;
 
 /** Tiga ruangan dari kiri ke kanan. Lebarnya ikut `x0`–`x1` (meter), lantainya `warna`, karpetnya `karpet`. */
 export const RUANGAN = [

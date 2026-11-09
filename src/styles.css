@@ -651,3 +651,14 @@ body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; overflow: hidden
   font: 800 0.8125rem/1 ui-monospace, monospace;
   box-shadow: 0 3px 10px rgb(27 19 48 / 0.2);
 }
+
+/* Pemilih gaya 3D (pojok kanan bawah) dan kabur tilt-shift gaya diorama. */
+.ko-gaya { position: absolute; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 4; display: grid; justify-items: end; gap: 6px; font-size: 0.8125rem; }
+.ko-gaya ul { display: grid; gap: 2px; max-height: min(60vh, 460px); overflow: auto; margin: 0; padding: 6px; list-style: none; border-radius: 14px; background: rgb(255 255 255 / 0.94); color: #1b1330; box-shadow: 0 8px 30px rgb(0 0 0 / 0.18); }
+.ko-gaya li button { display: flex; width: 100%; justify-content: space-between; gap: 12px; padding: 6px 10px; border: 0; border-radius: 9px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.ko-gaya li button:hover { background: #f1ecf8; }
+.ko-gaya li button[aria-pressed='true'] { background: #271b3f; color: #fff; }
+.ko-gaya li small { opacity: 0.6; font-size: 0.6875rem; }
+.ko-gaya-btn { padding: 8px 14px; border: 0; border-radius: 999px; background: rgb(39 27 63 / 0.85); color: #fff; font: inherit; font-weight: 600; cursor: pointer; backdrop-filter: blur(6px); }
+.ko-tilt { position: absolute; inset: 0; pointer-events: none; backdrop-filter: blur(4px) saturate(1.2);
+  -webkit-mask-image: linear-gradient(#000 0%, transparent 34%, transparent 66%, #000 100%); mask-image: linear-gradient(#000 0%, transparent 34%, transparent 66%, #000 100%); }

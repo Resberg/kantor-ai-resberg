@@ -1,12 +1,8 @@
 import { useEffect, useRef } from 'react';
 import {
   AmbientLight,
-  BoxGeometry,
-  CapsuleGeometry,
   CircleGeometry,
   Color,
-  ConeGeometry,
-  CylinderGeometry,
   DirectionalLight,
   Fog,
   Group,
@@ -19,17 +15,19 @@ import {
   OrthographicCamera,
   PointLight,
   Scene,
-  SphereGeometry,
   Vector3,
   WebGLRenderer,
 } from 'three';
 import { RUANGAN } from './config';
+import { buatKitGaya } from './gaya';
+import type { Dunia, Peran } from './gaya/alat';
 
 type AgentKey = string;
 import { idleAt, type DeskState, type IdleSpot } from './office';
 
 /*
- * Kantor AI 3D (Three.js). Bentuk sederhana saja (tanpa model/tekstur) supaya ringan di HP. Label dan gelembung adalah HTML
+ * Kantor AI 3D (Three.js). Bentuk dan bahan datang dari gaya aktif (src/gaya/<id>.ts, `gaya`); tanpa model 3D, tekstur dari
+ * kanvas, supaya ringan di HP. Label dan gelembung adalah HTML
  * di atas kanvas (`anchors`); komponen ini hanya memindahkannya tiap frame. `manual` (rekam): tanpa loop, halaman menggambar
  * frame t lewat `drive.current(t)`.
  */
@@ -46,6 +44,8 @@ export interface SceneProps {
   drive?: React.RefObject<((t: number) => void) | null>;
   onReady?: () => void;
   onFail?: () => void;
+  /** Id gaya 3D (src/gaya). Ganti = scene dibangun ulang. */
+  gaya?: string;
 }
 
 const shade = (hex: string, f: number) => {
@@ -82,7 +82,7 @@ interface Actor {
 
 const smooth = (x: number) => x * x * (3 - 2 * x);
 
-export default function OfficeScene({ desks, night, boardCount, anchors, boardAnchor, cinematic, manual, drive, onReady, onFail }: SceneProps) {
+export default function OfficeScene({ desks, night, boardCount, anchors, boardAnchor, cinematic, manual, drive, onReady, onFail, gaya }: SceneProps) {
   const host = useRef<HTMLDivElement>(null);
   const live = useRef({ desks, night, boardCount, dirty: true });
   live.current = { desks, night, boardCount, dirty: true };
@@ -103,44 +103,50 @@ export default function OfficeScene({ desks, night, boardCount, anchors, boardAn
     renderer.domElement.setAttribute('aria-hidden', 'true');
 
     const scene = new Scene();
-    if (cinematic) scene.fog = new Fog('#f3e9de', 30, 48);
+    const K = buatKitGaya(gaya);
+    if (cinematic && K.kabut) scene.fog = new Fog(K.kabut[0], 30, 48);
+    const kantor = new Group();
+    scene.add(kantor);
     const camera = new OrthographicCamera(-10, 10, 6, -6, 0.1, 100);
     const target = new Vector3(-0.3, 1.2, -0.3);
 
-    const hemi = new HemisphereLight('#fff6ea', '#a58b73', 1.5);
-    const sun = new DirectionalLight('#ffe2b8', 1.7);
+    const C = K.cahaya;
+    const hemi = new HemisphereLight(C.langit, C.bumi, C.kuat);
+    const sun = new DirectionalLight(C.matahari, C.mKuat);
     sun.position.set(-6, 12, 8);
     const amb = new AmbientLight('#ffffff', 0.35);
     scene.add(hemi, sun, amb);
 
     const disposables: { dispose(): void }[] = [];
     const geo = <T extends BufferGeometry>(g: T) => (disposables.push(g), g);
-    const mat = (color: string, emissive?: string) => {
-      const m = new MeshLambertMaterial({ color, emissive: emissive ? new Color(emissive) : undefined });
-      disposables.push(m);
-      return m;
-    };
-    const add = (mesh: Mesh, x: number, y: number, z: number, parent: Scene | Group | Mesh = scene) => {
+    // Semua bahan & bentuk lewat kit gaya; peran objek ikut di bahan (userData.peran) supaya bentuknya juga ikut gaya.
+    const mat = (color: string, peran: Peran, emissive?: string) => K.bahan(color, peran, emissive);
+    const peranDari = (m: Material) => (m.userData.peran ?? 'kayu') as Peran;
+    const add = (mesh: Mesh, x: number, y: number, z: number, parent: Scene | Group | Mesh = kantor) => {
       mesh.position.set(x, y, z);
       parent.add(mesh);
+      K.hias?.(mesh, peranDari(mesh.material as Material));
       return mesh;
     };
-    const box = (w: number, h: number, d: number, m: Material, x: number, y: number, z: number, parent?: Group) => add(new Mesh(geo(new BoxGeometry(w, h, d)), m), x, y, z, parent);
+    const box = (w: number, h: number, d: number, m: Material, x: number, y: number, z: number, parent?: Group) => add(new Mesh(K.kotak(w, h, d, peranDari(m)), m), x, y, z, parent);
+    const cyl = (rt: number, rb: number, h: number, m: Material) => new Mesh(K.tabung(rt, rb, h, peranDari(m)), m);
+    const ball = (r: number, m: Material, kubah = false) => new Mesh(K.bola(r, peranDari(m), kubah), m);
+    const cone = (r: number, h: number, m: Material, open = false) => new Mesh(K.kerucut(r, h, peranDari(m), open), m);
 
     // ---------- the building ----------
-    const lineM = mat('#cdb79c');
+    const lineM = mat('#cdb79c', 'garis');
     const floors = ROOMS.map((r) => {
-      const m = mat(r.floor);
+      const m = mat(r.floor, 'lantai');
       box(r.x1 - r.x0 - 0.04, 0.14, Z1 - Z0, m, (r.x0 + r.x1) / 2, -0.07, (Z0 + Z1) / 2);
       for (let z = Z0 + 0.5; z < Z1; z += 0.65) box(r.x1 - r.x0 - 0.1, 0.005, 0.02, lineM, (r.x0 + r.x1) / 2, 0.002, z);
-      box(2.6, 0.02, 1.8, mat(r.rug), (r.x0 + r.x1) / 2, 0.012, 0.8);
+      box(2.6, 0.02, 1.8, mat(r.rug, 'karpet'), (r.x0 + r.x1) / 2, 0.012, 0.8);
       return { m, r };
     });
-    box(14.6, 0.5, Z1 - Z0 + 0.6, mat('#3a2a5c'), 0, -0.4, (Z0 + Z1) / 2 + 0.15);
-    const wallM = mat('#fbf6ef');
-    const wallSideM = mat('#f1e8dc');
-    const trimM = mat('#271b3f');
-    const woodM = mat('#a87c56');
+    box(14.6, 0.5, Z1 - Z0 + 0.6, mat('#3a2a5c', 'alas'), 0, -0.4, (Z0 + Z1) / 2 + 0.15);
+    const wallM = mat('#fbf6ef', 'dinding');
+    const wallSideM = mat('#f1e8dc', 'dinding');
+    const trimM = mat('#271b3f', 'bingkai');
+    const woodM = mat('#a87c56', 'kayu');
     box(14, 3, 0.18, wallM, 0, 1.5, Z0 - 0.09);
     box(0.18, 3, Z1 - Z0, wallSideM, -7.09, 1.5, (Z0 + Z1) / 2);
     box(14, 0.12, 0.22, woodM, 0, 0.06, Z0 - 0.02);
@@ -151,7 +157,7 @@ export default function OfficeScene({ desks, night, boardCount, anchors, boardAn
       box(0.18, 0.06, 2.6, woodM, x, 1.27, Z0 + 1.3);
       box(0.18, 0.06, 2.0, woodM, x, 1.27, Z1 - 1.0);
     }
-    const glassM = mat('#bfe3ff', '#7fb8e6');
+    const glassM = mat('#bfe3ff', 'kaca', '#7fb8e6');
     for (const x of [-5.6, -3.4, 3.4, 5.6]) {
       box(1.6, 1.2, 0.06, trimM, x, 1.8, Z0 + 0.02);
       box(1.44, 1.04, 0.04, glassM, x, 1.8, Z0 + 0.05);
@@ -161,15 +167,15 @@ export default function OfficeScene({ desks, night, boardCount, anchors, boardAn
       box(0.06, 1.1, 1.4, trimM, -7.0, 1.8, z);
       box(0.04, 0.96, 1.26, glassM, -6.97, 1.8, z);
     }
-    for (const r of ROOMS) box(1.6, 0.26, 0.04, mat(r.rug, r.rug), (r.x0 + r.x1) / 2, 2.75, Z0 + 0.03);
+    for (const r of ROOMS) box(1.6, 0.26, 0.04, mat(r.rug, 'catatan', r.rug), (r.x0 + r.x1) / 2, 2.75, Z0 + 0.03);
 
     // Mission Board with sticky notes for the open items.
     box(3.2, 1.6, 0.1, trimM, BOARD.x, 1.75, Z0 + 0.05);
-    box(3.0, 1.4, 0.04, mat('#f7f2ea'), BOARD.x, 1.75, Z0 + 0.11);
+    box(3.0, 1.4, 0.04, mat('#f7f2ea', 'papan'), BOARD.x, 1.75, Z0 + 0.11);
     const noteColors = ['#ffd166', '#f3355b', '#7bdff2', '#b2f7ef', '#f7aef8', '#cdb4db', '#ffd166', '#7bdff2'];
     const notes = noteColors.map((c, i) => {
-      const n = box(0.5, 0.4, 0.02, mat(c, c), BOARD.x - 1.05 + (i % 4) * 0.7, 2.12 - Math.floor(i / 4) * 0.6, Z0 + 0.15);
-      (n.material as MeshLambertMaterial).emissiveIntensity = 0.2;
+      const n = box(0.5, 0.4, 0.02, mat(c, 'catatan', c), BOARD.x - 1.05 + (i % 4) * 0.7, 2.12 - Math.floor(i / 4) * 0.6, Z0 + 0.15);
+      (n.material as MeshLambertMaterial).emissiveIntensity = K.selaluMalam ? 0.7 : 0.2;
       n.rotation.z = ((i * 37) % 7) / 60 - 0.05;
       return n;
     });
@@ -179,89 +185,120 @@ export default function OfficeScene({ desks, night, boardCount, anchors, boardAn
       const g = new Group();
       box(1.2, 1.8, 0.36, woodM, 0, 0.9, 0, g);
       const bookColors = ['#e4572e', '#2a9d8f', '#f2b134', '#3a86ff', '#8e6bd8', '#ff5d8f'];
-      for (let row = 0; row < 3; row++) for (let i = 0; i < 6; i++) box(0.14, 0.34, 0.26, mat(bookColors[(i + row) % 6]!), -0.45 + i * 0.18, 0.4 + row * 0.55, 0.04, g);
+      for (let row = 0; row < 3; row++) for (let i = 0; i < 6; i++) box(0.14, 0.34, 0.26, mat(bookColors[(i + row) % 6]!, 'buku'), -0.45 + i * 0.18, 0.4 + row * 0.55, 0.04, g);
       g.position.set(x, 0, z);
       g.rotation.y = rot;
-      scene.add(g);
+      kantor.add(g);
     };
     shelf(-6.75, 0.0, Math.PI / 2);
     shelf(6.2, -3.2);
-    const potM = mat('#c26b3b');
-    const leafM = mat('#3f9b4f');
-    const leaf2M = mat('#5bbf5e');
+    const potM = mat('#c26b3b', 'pot');
+    const leafM = mat('#3f9b4f', 'daun');
+    const leaf2M = mat('#5bbf5e', 'daun');
     const plant = (x: number, z: number, s = 1) => {
-      add(new Mesh(geo(new CylinderGeometry(0.2 * s, 0.16 * s, 0.4 * s, 12)), potM), x, 0.2 * s, z);
-      add(new Mesh(geo(new ConeGeometry(0.34 * s, 0.9 * s, 8)), leafM), x, 0.85 * s, z);
-      add(new Mesh(geo(new SphereGeometry(0.26 * s, 10, 8)), leaf2M), x + 0.12 * s, 0.7 * s, z + 0.1 * s);
+      add(cyl(0.2 * s, 0.16 * s, 0.4 * s, potM), x, 0.2 * s, z);
+      add(cone(0.34 * s, 0.9 * s, leafM), x, 0.85 * s, z);
+      add(ball(0.26 * s, leaf2M), x + 0.12 * s, 0.7 * s, z + 0.1 * s);
     };
     plant(-6.5, 2.6, 1.2);
     plant(1.5, -3.0);
     plant(6.55, 2.6, 1.2);
     plant(-2.3, -3.0);
     plant(2.5, 2.6, 0.9);
-    box(1.8, 0.42, 0.7, mat('#5b4a72'), 0.1, 0.21, 2.3);
-    box(1.8, 0.5, 0.18, mat('#3a2a5c'), 0.1, 0.62, 2.62);
+    box(1.8, 0.42, 0.7, mat('#5b4a72', 'sofa'), 0.1, 0.21, 2.3);
+    box(1.8, 0.5, 0.18, mat('#3a2a5c', 'sofa'), 0.1, 0.62, 2.62);
     box(0.7, 0.3, 0.5, woodM, 0.1, 0.15, 1.5);
     box(1.4, 0.95, 0.5, woodM, -1.2, 0.47, -3.1);
     box(0.36, 0.42, 0.3, trimM, -1.45, 1.16, -3.1);
-    add(new Mesh(geo(new CylinderGeometry(0.07, 0.06, 0.14, 10)), mat('#ffffff')), -1.0, 1.02, -3.05);
+    add(cyl(0.07, 0.06, 0.14, mat('#ffffff', 'kertas')), -1.0, 1.02, -3.05);
     const pendant: Mesh[] = [];
     for (const [x, z] of [[-4.4, 0], [0.1, 0.2], [4.5, -0.2]] as const) {
       box(0.02, 0.9, 0.02, trimM, x, 3.15, z);
-      pendant.push(add(new Mesh(geo(new ConeGeometry(0.32, 0.3, 14, 1, true)), mat('#271b3f', '#000000')), x, 2.6, z));
+      pendant.push(add(cone(0.32, 0.3, mat('#271b3f', 'lampu', '#000000'), true), x, 2.6, z));
     }
 
-    let grassM: MeshLambertMaterial | null = null;
+    let grassM: Material & { color: Color } | null = null;
+    // ---------- world building (gaya paduan) ----------
+    const dunia: Dunia = K.dunia?.({
+      scene,
+      kantor,
+      K,
+      pasang: (g, m, x, y, z, induk = kantor) => {
+        const me = new Mesh(g, m);
+        me.position.set(x, y, z);
+        induk.add(me);
+        return me;
+      },
+    }) ?? {};
+    const naik = dunia.tinggi ?? 0;
+    kantor.position.y = naik;
+    target.y += naik;
     // ---------- outside: lawn, trees, a stone path (full screen) ----------
-    if (cinematic) {
-      const grass = box(60, 0.2, 60, mat('#8cc672'), 0, -0.75, 0);
-      grassM = grass.material as MeshLambertMaterial;
-      const trunkM = mat('#7a4a2a');
-      const crownM = [mat('#4f9d4a'), mat('#6dbb5a'), mat('#f6a5c0')];
+    if (cinematic && !dunia.gantiLuar) {
+      const L = K.luar;
+      const grassMat = mat('#8cc672', 'tanah');
+      grassM = grassMat;
+      if (L.bentuk === 'bulat') add(cyl(L.ukuran / 2, L.ukuran / 2 + 0.3, 0.3, grassMat), 0, -0.8, -1);
+      else box(L.ukuran, 0.2, L.ukuran, grassMat, 0, -0.75, L.ukuran < 40 ? -2 : 0);
+      if (L.alas) box(L.ukuran + 0.6, 0.7, L.ukuran + 0.6, mat(L.alas, 'alas'), 0, -1.2, L.ukuran < 40 ? -2 : 0);
+      const trunkM = mat('#7a4a2a', 'batang');
+      const crownM = [mat('#4f9d4a', 'daun'), mat('#6dbb5a', 'daun'), mat('#f6a5c0', 'daun')];
       const tree = (x: number, z: number, s: number, c: number) => {
-        add(new Mesh(geo(new CylinderGeometry(0.12 * s, 0.16 * s, 1.0 * s, 8)), trunkM), x, -0.65 + 0.5 * s, z);
-        add(new Mesh(geo(new SphereGeometry(0.8 * s, 12, 10)), crownM[c]!), x, -0.65 + 1.45 * s, z);
-        add(new Mesh(geo(new SphereGeometry(0.55 * s, 12, 10)), crownM[c]!), x + 0.45 * s, -0.65 + 1.2 * s, z + 0.3 * s);
+        add(cyl(0.12 * s, 0.16 * s, 1.0 * s, trunkM), x, -0.65 + 0.5 * s, z);
+        add(ball(0.8 * s, crownM[c]!), x, -0.65 + 1.45 * s, z);
+        add(ball(0.55 * s, crownM[c]!), x + 0.45 * s, -0.65 + 1.2 * s, z + 0.3 * s);
       };
       // Behind and left of the office only: nothing in front of the camera.
       const spots: [number, number, number, number][] = [
         [-9.5, -5.5, 1.3, 0], [-10.5, -1, 1.1, 1], [-10, 3.5, 1.4, 2], [-5, -6.5, 1.2, 1], [-1, -6.8, 1.5, 0], [3.5, -6.5, 1.2, 2],
         [8, -6, 1.3, 1], [-12, 7, 1.2, 0], [12, -9, 1.4, 2], [-8, -8.5, 1.1, 2],
       ];
-      for (const [x, z, s2, c] of spots) tree(x, z, s2, c);
-      const stoneM = mat('#d8cfc2');
+      const muat = (x: number, z: number) => (L.bentuk === 'bulat' ? Math.hypot(x, z + 1) < L.ukuran / 2 - 1 : Math.abs(x) < L.ukuran / 2 - 0.8 && Math.abs(z + (L.ukuran < 40 ? 2 : 0)) < L.ukuran / 2 - 0.8);
+      for (const [x, z, s2, c] of spots) if (muat(x, z)) tree(x, z, s2, c);
+      const stoneM = mat('#d8cfc2', 'batu');
       for (let i = 0; i < 7; i++) {
-        const st = add(new Mesh(geo(new CylinderGeometry(0.35, 0.38, 0.06, 10)), stoneM), -7.8 - i * 0.75, -0.63, 0.2 + (i % 2) * 0.3);
+        const sx = -7.8 - i * 0.75;
+        if (!muat(sx, 0.2)) continue;
+        const st = add(cyl(0.35, 0.38, 0.06, stoneM), sx, -0.63, 0.2 + (i % 2) * 0.3);
         st.scale.set(1, 1, 0.7);
+      }
+      if (L.awan) {
+        const awanM = mat('#ffffff', 'awan');
+        for (const [cx, cy, cz] of [[-6, 6.5, -10], [5, 7.2, -11], [11, 6, -6]] as const) {
+          add(ball(0.9, awanM), cx, cy, cz);
+          add(ball(0.65, awanM), cx + 0.9, cy - 0.15, cz);
+          add(ball(0.6, awanM), cx - 0.9, cy - 0.18, cz);
+        }
       }
     }
 
     // ---------- desks and agents ----------
-    const legM = mat('#4b3b62');
-    const chairM = mat('#3a2a5c');
+    const legM = mat('#4b3b62', 'kaki');
+    const chairM = mat('#3a2a5c', 'kursi');
     const shadowM = new MeshBasicMaterial({ color: '#1b1330', transparent: true, opacity: 0.14, depthWrite: false });
     disposables.push(shadowM);
     const nightLights = !!cinematic && !touch;
+    const hk = 0.24 * (K.agen.kepala - 1);
     const actors: Actor[] = desks.map((d, i) => {
       const { x, z } = d.desk;
-      const deskTop = box(1.4, 0.08, 0.76, mat('#c9a27c', '#000000'), x, 0.78, z);
+      const deskTop = box(1.4, 0.08, 0.76, mat('#c9a27c', 'meja', '#000000'), x, 0.78, z);
       box(1.3, 0.7, 0.05, legM, x, 0.38, z - 0.32);
       box(0.06, 0.74, 0.66, woodM, x - 0.64, 0.38, z);
       box(0.06, 0.74, 0.66, woodM, x + 0.64, 0.38, z);
       box(0.66, 0.44, 0.05, trimM, x - 0.05, 1.12, z - 0.22);
-      const screen = box(0.6, 0.36, 0.01, mat('#1b1330', '#000000'), x - 0.05, 1.12, z - 0.19);
+      const screen = box(0.6, 0.36, 0.01, mat('#1b1330', 'layar', '#000000'), x - 0.05, 1.12, z - 0.19);
       box(0.08, 0.16, 0.08, trimM, x - 0.05, 0.9, z - 0.22);
       if (d.desk.room === 'bizdev') box(0.36, 0.26, 0.04, trimM, x + 0.45, 1.02, z - 0.12).rotation.set(0, -0.5, 0);
-      box(0.52, 0.02, 0.18, mat('#efe9f6'), x - 0.05, 0.83, z + 0.08);
-      add(new Mesh(geo(new CylinderGeometry(0.06, 0.05, 0.12, 10)), mat(d.desk.color)), x + 0.5, 0.88, z + 0.15);
-      const book = box(0.34, 0.06, 0.26, mat('#f3355b'), x + 0.32, 0.86, z + 0.12);
-      const lamp = add(new Mesh(geo(new SphereGeometry(0.1, 12, 10)), mat('#fff3b0', '#ffcf4d')), x - 0.52, 1.1, z - 0.15);
+      box(0.52, 0.02, 0.18, mat('#efe9f6', 'kertas'), x - 0.05, 0.83, z + 0.08);
+      add(cyl(0.06, 0.05, 0.12, mat(d.desk.color, 'pot')), x + 0.5, 0.88, z + 0.15);
+      const book = box(0.34, 0.06, 0.26, mat('#f3355b', 'buku'), x + 0.32, 0.86, z + 0.12);
+      const lamp = add(ball(0.1, mat('#fff3b0', 'lampu', '#ffcf4d')), x - 0.52, 1.1, z - 0.15);
       box(0.04, 0.28, 0.04, trimM, x - 0.52, 0.96, z - 0.15);
       let light: PointLight | null = null;
       if (nightLights) {
         light = new PointLight('#ffb35c', 0, 4.5, 1.6);
         light.position.set(x - 0.4, 1.5, z + 0.2);
-        scene.add(light);
+        kantor.add(light);
       }
       box(0.56, 0.08, 0.56, chairM, x, 0.5, z + 0.75);
       box(0.56, 0.62, 0.08, chairM, x, 0.84, z + 1.03);
@@ -271,23 +308,26 @@ export default function OfficeScene({ desks, night, boardCount, anchors, boardAn
       const root = new Group();
       const seat = new Vector3(x, 0, z + 0.72);
       root.position.copy(seat);
-      const shirt = mat(d.desk.color);
-      const pants = mat('#2b2340');
-      const skin = mat(SKIN[i % SKIN.length]!);
-      const body = add(new Mesh(geo(new CapsuleGeometry(0.23, 0.4, 4, 14)), shirt), 0, 0.92, 0, root);
-      const head = add(new Mesh(geo(new SphereGeometry(0.22, 18, 14)), skin), 0, 1.42, 0, root);
-      const hair = add(new Mesh(geo(new SphereGeometry(0.235, 18, 14, 0, Math.PI * 2, 0, Math.PI / 1.8)), mat(HAIR[i % HAIR.length]!)), 0, 0.02, 0.02, head);
+      const shirt = mat(d.desk.color, 'baju');
+      const pants = mat('#2b2340', 'celana');
+      const skin = mat(SKIN[i % SKIN.length]!, 'kulit');
+      const body = add(new Mesh(K.kapsul(0.23, 0.4, 'baju'), shirt), 0, 0.92, 0, root);
+      body.scale.setScalar(K.agen.badan);
+      const head = add(ball(0.22, skin), 0, 1.42 + hk, 0, root);
+      const hair = add(ball(0.235, mat(HAIR[i % HAIR.length]!, 'rambut'), true), 0, 0.02, 0.02, head);
       hair.rotation.x = 0.35;
+      // Kepala besar (chibi): skala dari leher, jadi tetap menempel di badan.
+      head.scale.setScalar(K.agen.kepala);
       const limb = (r: number, len: number, m: Material, px: number, py: number) => {
-        const g = new CapsuleGeometry(r, len, 3, 8);
+        const g = K.kapsul(r, len, peranDari(m));
         g.translate(0, -len / 2 - r / 2, 0);
-        return add(new Mesh(geo(g), m), px, py, 0, root);
+        return add(new Mesh(g, m), px, py, 0, root);
       };
       const armL = limb(0.07, 0.34, shirt, -0.29, 1.12);
       const armR = limb(0.07, 0.34, shirt, 0.29, 1.12);
       const legL = limb(0.085, 0.38, pants, -0.11, 0.62);
       const legR = limb(0.085, 0.38, pants, 0.11, 0.62);
-      scene.add(root);
+      kantor.add(root);
       return { key: d.desk.key, root, body, head, armL, armR, legL, legR, screen, deskTop, book, lamp, light, seat, label: new Vector3(), phase: i * 1.7, index: i };
     });
 
@@ -300,9 +340,9 @@ export default function OfficeScene({ desks, night, boardCount, anchors, boardAn
       const aspect = w / h;
       // Portrait full screen (reels): the camera turns toward the long side, so the office runs down the screen.
       portrait = !!cinematic && aspect < 0.8;
-      let halfW = cinematic ? (portrait ? 5.2 : 7.0) : 7.4;
+      let halfW = (cinematic ? (portrait ? 5.2 : 7.0) : 7.4) * (dunia.lebar ?? 1);
       let halfH = halfW / aspect;
-      const minH = cinematic ? (portrait ? 3 : 4.6) : 4.9;
+      const minH = (cinematic ? (portrait ? 3 : 4.6) : 4.9) * (dunia.lebar ?? 1);
       if (halfH < minH) {
         halfH = minH;
         halfW = halfH * aspect;
@@ -313,7 +353,10 @@ export default function OfficeScene({ desks, night, boardCount, anchors, boardAn
       camera.bottom = -halfH;
       camera.updateProjectionMatrix();
       live.current.dirty = true;
+      // Rekam (manual): ukuran kanvas berubah = kanvas terhapus, jadi gambar ulang frame terakhir.
+      redraw?.();
     };
+    let redraw: (() => void) | null = null;
     fit();
     const ro = new ResizeObserver(fit);
     ro.observe(el);
@@ -324,11 +367,11 @@ export default function OfficeScene({ desks, night, boardCount, anchors, boardAn
     const shotAim = (i: number, out: Vector3): number => {
       if (i < 0 || i % 3 === 0 || !actors.length) {
         out.copy(home);
-        return 1.02;
+        return 1.02 * (dunia.zoomJauh ?? 1);
       }
       const shown = actors.filter((x) => x.root.visible);
       const pick = (shown.length ? shown : actors)[(i * 2 + Math.floor(i / 3)) % (shown.length || actors.length)]!;
-      out.set(pick.root.position.x, 1.1, pick.root.position.z);
+      out.set(pick.root.position.x, 1.1 + naik, pick.root.position.z);
       return portrait ? 1.7 : 1.6;
     };
     const aimA = new Vector3();
@@ -364,7 +407,8 @@ export default function OfficeScene({ desks, night, boardCount, anchors, boardAn
       const y = ((1 - proj.y) / 2) * el.clientHeight;
       node.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
     };
-    const boardAt = new Vector3(BOARD.x, 2.75, Z0 + 0.1);
+    const boardAt = new Vector3(BOARD.x, 2.75 + naik, Z0 + 0.1);
+    const labelAt = new Vector3();
     const dest = new Vector3();
     const pos = new Vector3();
     const ahead = new Vector3();
@@ -389,21 +433,24 @@ export default function OfficeScene({ desks, night, boardCount, anchors, boardAn
 
     let lastNight: boolean | null = null;
     const applyState = (t: number) => {
-      const { desks: list, night: isNight, boardCount: count } = live.current;
+      const { desks: list, boardCount: count } = live.current;
+      const isNight = live.current.night || !!K.selaluMalam;
       if (isNight !== lastNight) {
         lastNight = isNight;
-        hemi.intensity = isNight ? 0.35 : 1.5;
-        hemi.color.set(isNight ? '#7d8cff' : '#fff6ea');
-        sun.intensity = isNight ? 0.15 : 1.7;
-        sun.color.set(isNight ? '#8fa2ff' : '#ffe2b8');
+        const w = K.warna;
+        hemi.intensity = isNight ? 0.35 * (K.selaluMalam ? 2.4 : 1) : C.kuat;
+        hemi.color.set(isNight ? (K.selaluMalam ? C.langit : '#7d8cff') : C.langit);
+        sun.intensity = isNight ? 0.15 * (K.selaluMalam ? 3 : 1) : C.mKuat;
+        sun.color.set(isNight ? '#8fa2ff' : C.matahari);
         amb.intensity = isNight ? 0.22 : 0.35;
-        glassM.color.set(isNight ? '#18204a' : '#bfe3ff');
+        glassM.color.set(w(isNight ? '#18204a' : '#bfe3ff', 'kaca'));
         glassM.emissive.set(isNight ? '#10173a' : '#7fb8e6');
-        for (const f of floors) f.m.color.set(isNight ? f.r.floorNight : f.r.floor);
-        grassM?.color.set(isNight ? '#2c4a33' : '#8cc672');
-        lineM.color.set(isNight ? '#3c3029' : '#cdb79c');
+        for (const f of floors) f.m.color.set(w(isNight ? f.r.floorNight : f.r.floor, 'lantai'));
+        grassM?.color.set(w(isNight ? '#2c4a33' : '#8cc672', 'tanah'));
+        lineM.color.set(w(isNight ? '#3c3029' : '#cdb79c', 'garis'));
         for (const p of pendant) (p.material as MeshLambertMaterial).emissive.set(isNight ? '#ffb35c' : '#000000');
-        if (scene.fog) (scene.fog as Fog).color.set(isNight ? '#120d22' : '#f3e9de');
+        if (scene.fog && K.kabut) (scene.fog as Fog).color.set(isNight ? K.kabut[1] : K.kabut[0]);
+        dunia.malam?.(isNight);
       }
       notes.forEach((n, i) => (n.visible = i < count));
       for (const a of actors) {
@@ -454,13 +501,13 @@ export default function OfficeScene({ desks, night, boardCount, anchors, boardAn
         } else if (spot === 'sofa' && k === 1) a.root.rotation.set(0, Math.PI, 0);
         else a.root.rotation.set(0, 0, 0);
         a.root.position.y = spot === 'sofa' && k === 1 ? -0.05 : 0;
-        a.label.set(pos.x, standing && !sitting ? 1.95 : (cinematic ? 1.75 : 2.1), pos.z);
+        a.label.set(pos.x, (standing && !sitting ? 1.95 : (cinematic ? 1.75 : 2.1)) + hk * 2, pos.z);
         if (reduce) continue;
         const s = Math.sin(t * 9 + a.phase);
         if (!sitting) {
           const bob = walking ? 0.03 * Math.abs(s) : 0;
           a.body.position.y = 0.98 + bob;
-          a.head.position.y = 1.48 + bob;
+          a.head.position.y = 1.48 + hk + bob;
           a.armL.position.y = a.armR.position.y = 1.18 + bob;
           a.legL.position.y = a.legR.position.y = 0.7;
           a.legL.rotation.set(walking ? 0.6 * s : 0, 0, 0);
@@ -473,7 +520,7 @@ export default function OfficeScene({ desks, night, boardCount, anchors, boardAn
           a.legL.rotation.set(-1.4, 0, 0);
           a.legR.rotation.set(-1.4, 0, 0);
           a.body.position.y = 0.92;
-          a.head.position.y = 1.42;
+          a.head.position.y = 1.42 + hk;
           a.armL.position.y = a.armR.position.y = 1.12;
           if (busy) {
             a.armL.rotation.set(-1.15 + 0.12 * Math.sin(t * 16 + a.phase), 0, 0.1);
@@ -498,11 +545,13 @@ export default function OfficeScene({ desks, night, boardCount, anchors, boardAn
       placeCamera(t);
       applyState(t);
       renderer.render(scene, camera);
-      for (const a of actors) place(anchors.current?.get(a.key), a.label);
+      for (const a of actors) place(anchors.current?.get(a.key), labelAt.set(a.label.x, a.label.y + naik, a.label.z));
       place(boardAnchor.current, boardAt);
       live.current.dirty = false;
     };
-    if (drive) drive.current = draw;
+    let lastT = 0;
+    if (drive) drive.current = (t: number) => draw((lastT = t));
+    if (manual) redraw = () => draw(lastT);
 
     let raf = 0;
     let running = true;
@@ -547,12 +596,13 @@ export default function OfficeScene({ desks, night, boardCount, anchors, boardAn
       ro.disconnect();
       document.removeEventListener('visibilitychange', onVis);
       for (const d of disposables) d.dispose();
+      K.dispose();
       renderer.dispose();
       renderer.domElement.remove();
     };
     // The scene is built once per set of desks; their state is read live from `live`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [desks.map((d) => d.desk.key).join(','), cinematic, manual]);
+  }, [desks.map((d) => d.desk.key).join(','), cinematic, manual, gaya]);
 
   return <div ref={host} className="ko-canvas" />;
 }

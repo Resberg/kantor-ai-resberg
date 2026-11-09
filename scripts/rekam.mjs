@@ -1,5 +1,5 @@
 // Merekam timelapse Kantor AI jadi MP4 (vertikal 1080×1920, 30 fps), frame demi frame, jadi hasilnya mulus.
-// Jalankan `npm run dev` dulu, lalu: npm run rekam -- kantor-ai.mp4 [--w 1080 --h 1920 --fps 30 --detik 30]
+// Jalankan `npm run dev` dulu, lalu: npm run rekam -- kantor-ai.mp4 [--w 1080 --h 1920 --fps 30 --detik 30 --gaya clay]
 // Butuh Google Chrome (atau CHROME=/path/ke/chrome) dan ffmpeg (brew install ffmpeg, atau FFMPEG=/path/ke/ffmpeg).
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -16,6 +16,7 @@ const H = Number(arg('h', 1920));
 const FPS = Number(arg('fps', 30));
 const SECONDS = Number(arg('detik', 30));
 const BASE = arg('url', 'http://localhost:5173');
+const GAYA = arg('gaya', '');
 const home = os.homedir();
 const CHROME =
   process.env.CHROME ??
@@ -65,7 +66,7 @@ try {
   };
 
   await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false });
-  await send('Page.navigate', { url: `${BASE}/?timelapse=1&rekam=1` });
+  await send('Page.navigate', { url: `${BASE}/?timelapse=1&rekam=1${GAYA ? `&gaya=${encodeURIComponent(GAYA)}` : ''}` });
   await until(`typeof window.__koFrame === 'function' && window.__koFrame(0)`, 'scene');
   await sleep(1200);
 
