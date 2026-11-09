@@ -39,7 +39,7 @@ Tips: biar cepat, buka folder ini di Claude Code dan minta, misalnya, "ganti age
 
 ## Ganti gaya 3D
 
-Ada 13 gaya selain gaya asli. Gaya *menyeluruh* mengubah bentuk dan bahan semua objek (agen, meja, kursi, monitor, dinding, jendela, tanaman, pohon, tanah, Mission Board). Gaya *paduan* menambah dunia di sekitar kantor; posisi agen dan meja tetap ikut `config.ts`.
+Ada 16 gaya selain gaya asli. Gaya *menyeluruh* mengubah bentuk dan bahan semua objek (agen, meja, kursi, monitor, dinding, jendela, tanaman, pohon, tanah, Mission Board). Gaya *paduan* menambah dunia di sekitar kantor; posisi agen dan meja tetap ikut `config.ts`.
 
 | Id | Jenis | Isi |
 |---|---|---|
@@ -57,6 +57,9 @@ Ada 13 gaya selain gaya asli. Gaya *menyeluruh* mengubah bentuk dan bahan semua 
 | `taman` | paduan | Low-poly + paviliun taman, kolam, pergola |
 | `gedung30` | paduan | Voxel + gedung 30 lantai, kantor di lantai cutaway |
 | `hologram` | paduan | Blueprint malam: grid cyan, dinding kaca, tepi garis cahaya, Mission Board hologram, partikel data |
+| `angkringan` | paduan | Angkringan malam: tikar lesehan, gerobak terpal, tungku arang & ceret, bohlam kuning, motor |
+| `pecellele` | paduan | Warung tenda pecel lele: spanduk lukis, meja panjang, bangku plastik, penggorengan, neon, kabel semrawut |
+| `bakso` | paduan | Siang depan sekolah: gerobak bakso berkaca, gerobak es, payung pelangi, pohon peneduh, pagar sekolah |
 
 Cara pilih:
 - Default: `GAYA` di `src/config.ts`.

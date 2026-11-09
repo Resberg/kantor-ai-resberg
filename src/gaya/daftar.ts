@@ -102,6 +102,29 @@ export const DAFTAR_GAYA = [
     latar: { siang: 'radial-gradient(130% 90% at 50% 20%, #0a1a33 0%, #03060d 70%)', malam: 'radial-gradient(130% 90% at 50% 20%, #0a1a33 0%, #03060d 70%)' },
     malam: true,
   },
+  {
+    id: 'angkringan',
+    nama: 'Angkringan Malam',
+    jenis: 'paduan',
+    ket: 'Kaki lima malam: tikar lesehan, gerobak beratap terpal, tungku arang & ceret, untaian bohlam kuning, motor parkir.',
+    latar: { siang: 'linear-gradient(#141a33, #2a2030)', malam: 'linear-gradient(#141a33, #2a2030)' },
+    malam: true,
+  },
+  {
+    id: 'pecellele',
+    nama: 'Warung Tenda Pecel Lele',
+    jenis: 'paduan',
+    ket: 'Tenda terpal dengan spanduk lukis, meja panjang & bangku plastik, gerobak penggorengan, lampu neon, kabel semrawut.',
+    latar: { siang: 'linear-gradient(#1d2440, #3a2a40)', malam: 'linear-gradient(#1d2440, #3a2a40)' },
+    malam: true,
+  },
+  {
+    id: 'bakso',
+    nama: 'Gerobak Bakso & Es',
+    jenis: 'paduan',
+    ket: 'Siang di depan sekolah: gerobak bakso berkaca, gerobak es, payung pelangi, pohon peneduh, pagar sekolah, sepeda.',
+    latar: { siang: 'linear-gradient(#9fdcff, #fff1d0)', malam: 'linear-gradient(#0e1a2a, #2a2a40)' },
+  },
 ] as const satisfies readonly InfoGaya[];
 
 export type GayaId = (typeof DAFTAR_GAYA)[number]['id'];

@@ -14,7 +14,7 @@ export const KANTOR = {
 
 /**
  * Gaya 3D kantor (lihat README, "Ganti gaya 3D"): 'asli' | 'clay' | 'felt' | 'voxel' | 'vinyl' | 'diorama' | 'kayu' |
- * 'stickman' | 'pulau' | 'toko' | 'menara' | 'taman' | 'gedung30'. Bisa ditimpa lewat ?gaya=<id> atau pemilih di layar.
+ * 'stickman' | 'pulau' | 'toko' | 'menara' | 'taman' | 'gedung30' | 'hologram' | 'angkringan' | 'pecellele' | 'bakso'. Bisa ditimpa lewat ?gaya=<id> atau pemilih di layar.
  */
 export const GAYA: GayaId = 'asli';
 /** Tombol pemilih gaya di pojok kanan bawah. false = sembunyikan (mis. untuk video final). */
