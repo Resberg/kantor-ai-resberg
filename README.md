@@ -91,3 +91,6 @@ Hasilnya MP4 vertikal 1080×1920, 30 fps, 30 detik, direkam frame demi frame (bu
 ## Lisensi
 
 MIT. Bebas dipakai, diubah, dan dibagikan.
+
+## Skill: kantor 3 agen
+Unduh `skill/kantor-ai-3-agen.zip`, taruh foldernya di `~/.claude/skills/` (Claude Code) atau minta Codex/Antigravity membaca `SKILL.md`, lalu ketik: "buat kantor AI 3 agen untuk bisnisku".
