@@ -18,7 +18,7 @@ Kalau pengguna bilang "terserah", pakai preset di bawah dan lanjut.
 
 ## 1. Siapkan proyek
 ```bash
-git clone https://github.com/imagiivedk-star/kantor-ai-template.git kantor-ai
+git clone https://github.com/malikisaputra-source/kantor-ai-template.git kantor-ai
 cd kantor-ai && npm install
 ```
 Butuh Node.js 18+. Kalau `npm` belum ada, minta pengguna pasang Node.js dulu dari nodejs.org.
