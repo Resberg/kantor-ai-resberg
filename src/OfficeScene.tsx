@@ -377,9 +377,25 @@ export default function OfficeScene({ desks, night, boardCount, anchors, boardAn
     const aimA = new Vector3();
     const aimB = new Vector3();
     const look = new Vector3();
+    // Kamera bebas: begitu pengguna menyeret/zoom, sutradara otomatis berhenti sampai klik dua kali.
+    const R = Math.hypot(17, 13.5);
+    const user = { on: false, a: 0, pitch: Math.atan2(13.5, 17), zoom: 1, look: new Vector3() };
+    let lastA = 0;
     const placeCamera = (t: number) => {
+      if (user.on) {
+        look.copy(user.look);
+        const c = Math.cos(user.pitch);
+        camera.position.set(look.x + R * c * Math.sin(user.a), look.y + R * Math.sin(user.pitch), look.z + R * c * Math.cos(user.a));
+        camera.lookAt(look);
+        if (camera.zoom !== user.zoom) {
+          camera.zoom = user.zoom;
+          camera.updateProjectionMatrix();
+        }
+        return;
+      }
       const swing = reduce ? 0 : cinematic ? (portrait ? 0.14 : 0.32) * Math.sin(t * 0.21) : 0.03 * Math.sin(t * 0.15);
       const a = (portrait ? 1.15 : Math.PI / 4) + swing;
+      lastA = a;
       let zoom = 1;
       look.copy(home);
       if (cinematic && !reduce) {
@@ -583,12 +599,91 @@ export default function OfficeScene({ desks, night, boardCount, anchors, boardAn
       e.preventDefault();
       onFail?.();
     });
+    // ---------- kendali kamera: seret = putar, roda/cubit = zoom, klik kanan/dua jari = geser, klik dua kali = otomatis ----------
+    const cv = renderer.domElement;
+    const pts = new Map<number, { x: number; y: number }>();
+    let pan = false;
+    const takeOver = () => {
+      if (user.on) return;
+      user.on = true;
+      user.a = lastA;
+      user.pitch = Math.atan2(13.5, 17);
+      user.zoom = camera.zoom;
+      user.look.copy(look);
+    };
+    const zoomBy = (f: number) => {
+      user.zoom = Math.min(5, Math.max(0.6, user.zoom * f));
+    };
+    const panBy = (dx: number, dy: number) => {
+      const wpp = (camera.right - camera.left) / camera.zoom / (el.clientWidth || 1);
+      const s = Math.sin(user.a), c = Math.cos(user.a);
+      const fwd = (dy * wpp) / Math.max(0.3, Math.sin(user.pitch));
+      user.look.x = Math.min(8, Math.max(-8, user.look.x - c * dx * wpp - s * fwd));
+      user.look.z = Math.min(5, Math.max(-5, user.look.z + s * dx * wpp - c * fwd));
+    };
+    const onDown = (e: PointerEvent) => {
+      cv.setPointerCapture(e.pointerId);
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      pan = e.button === 2 || e.shiftKey;
+      takeOver();
+    };
+    const onMove = (e: PointerEvent) => {
+      const p = pts.get(e.pointerId);
+      if (!p) return;
+      const dx = e.clientX - p.x, dy = e.clientY - p.y;
+      if (pts.size === 2) {
+        const [o] = [...pts].filter(([id]) => id !== e.pointerId).map(([, v]) => v);
+        const before = Math.hypot(p.x - o!.x, p.y - o!.y), after = Math.hypot(e.clientX - o!.x, e.clientY - o!.y);
+        if (before > 0) zoomBy(after / before);
+        panBy(dx / 2, dy / 2);
+      } else if (pan) panBy(dx, dy);
+      else {
+        user.a -= dx * 0.006;
+        user.pitch = Math.min(1.35, Math.max(0.25, user.pitch + dy * 0.004));
+      }
+      p.x = e.clientX;
+      p.y = e.clientY;
+      kick();
+    };
+    const onUp = (e: PointerEvent) => {
+      pts.delete(e.pointerId);
+    };
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      takeOver();
+      zoomBy(Math.exp(-e.deltaY * 0.0015));
+      kick();
+    };
+    const onDbl = () => {
+      user.on = false;
+      kick();
+    };
+    const noMenu = (e: Event) => e.preventDefault();
+    if (!manual) {
+      cv.style.touchAction = 'none';
+      cv.style.cursor = 'grab';
+      cv.addEventListener('pointerdown', onDown);
+      cv.addEventListener('pointermove', onMove);
+      cv.addEventListener('pointerup', onUp);
+      cv.addEventListener('pointercancel', onUp);
+      cv.addEventListener('wheel', onWheel, { passive: false });
+      cv.addEventListener('dblclick', onDbl);
+      cv.addEventListener('contextmenu', noMenu);
+    }
+
     if (manual) draw(0);
     kick();
     onReady?.();
 
     return () => {
       running = false;
+      cv.removeEventListener('pointerdown', onDown);
+      cv.removeEventListener('pointermove', onMove);
+      cv.removeEventListener('pointerup', onUp);
+      cv.removeEventListener('pointercancel', onUp);
+      cv.removeEventListener('wheel', onWheel);
+      cv.removeEventListener('dblclick', onDbl);
+      cv.removeEventListener('contextmenu', noMenu);
       if (drive) drive.current = null;
       if (raf) cancelAnimationFrame(raf);
       window.clearInterval(poll);
