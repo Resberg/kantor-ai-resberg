@@ -17,6 +17,8 @@ npm run dev
 
 Buka http://localhost:5173.
 
+Versi web: https://resberg.github.io/kantor-ai-resberg/ . Halaman publik ini menampilkan isi `src/laporan.json` yang dibangun saat deploy; proses agen lokal (`npm run agen`) tidak berjalan di GitHub Pages. Setelah mengubah laporan, commit dan push agar versi web ikut diperbarui.
+
 | Alamat | Isi |
 |---|---|
 | `/` | Kantor dengan jam sekarang |
