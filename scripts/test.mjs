@@ -62,6 +62,10 @@ t('agen: baca hasil Claude, gabung laporan, video baru, persetujuan', () => {
   assert.deepEqual(A.bacaHasil(JSON.stringify({ is_error: false, result: 'Ini dia: {"ringkasan":"y"}' })), { ringkasan: 'y' });
   assert.throws(() => A.bacaHasil(JSON.stringify({ is_error: true, result: 'Not logged in' })), /Not logged in/);
   assert.deepEqual(A.gabung({ riset: 1, admin: 2 }, 'riset', 3), { riset: 3, admin: 2 });
+  const r = A.rapikan({ ringkasan: 'x'.repeat(300), angka: [1, 2, 3].map(() => ({ label: 'l'.repeat(50), nilai: 'n'.repeat(50) })) });
+  assert.equal(r.ringkasan.length, 110);
+  assert.deepEqual(r.angka.map((a) => [a.label.length, a.nilai.length]), [[18, 12], [18, 12]]);
+  assert.equal('menunggu' in r, false);
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'agen-'));
   const masuk = path.join(dir, 'masuk'), siap = path.join(dir, 'siap');
   fs.mkdirSync(masuk); fs.mkdirSync(siap);

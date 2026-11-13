@@ -39,7 +39,20 @@ export function gabung(semua, key, laporan) {
   return { ...semua, [key]: laporan };
 }
 
+const potong = (s, n) => (String(s).length <= n ? String(s) : `${String(s).slice(0, n - 1)}…`);
+
+/** Batasi panjang teks: Mission Board dan gelembung di kantor hanya muat teks pendek. */
+export function rapikan(l) {
+  return {
+    ringkasan: potong(l.ringkasan ?? '', 110),
+    ...(l.menunggu && { menunggu: l.menunggu.slice(0, 3).map((s) => potong(s, 70)) }),
+    ...(l.mendesak && { mendesak: l.mendesak.slice(0, 3).map((s) => potong(s, 70)) }),
+    ...(l.angka && { angka: l.angka.slice(0, 2).map((a) => ({ label: potong(a.label, 18), nilai: potong(a.nilai, 12) })) }),
+  };
+}
+
 function tulisLaporan(key, laporan) {
+  laporan = rapikan(laporan);
   const lama = JSON.parse(fs.readFileSync(LAPORAN, 'utf8'));
   const tmp = `${LAPORAN}.tmp`;
   fs.writeFileSync(tmp, JSON.stringify(gabung(lama, key, laporan), null, 2) + '\n');
@@ -50,9 +63,14 @@ function tulisLaporan(key, laporan) {
 const LAPORAN_SCHEMA = {
   type: 'object',
   properties: {
-    ringkasan: { type: 'string', description: 'Satu kalimat, maks 110 karakter.' },
-    menunggu: { type: 'array', items: { type: 'string' }, description: 'Butir yang perlu keputusan pemilik, maks 3.' },
-    angka: { type: 'array', items: { type: 'object', properties: { label: { type: 'string' }, nilai: { type: 'string' } }, required: ['label', 'nilai'] } },
+    ringkasan: { type: 'string', maxLength: 110, description: 'Satu kalimat, maks 110 karakter.' },
+    menunggu: { type: 'array', maxItems: 3, items: { type: 'string', maxLength: 70 }, description: 'Butir yang perlu keputusan pemilik, singkat.' },
+    angka: {
+      type: 'array',
+      maxItems: 2,
+      description: 'Angka pendek untuk papan, mis. {label: "Sumber dicek", nilai: "6 sumber"}. Bukan kalimat.',
+      items: { type: 'object', properties: { label: { type: 'string', maxLength: 18 }, nilai: { type: 'string', maxLength: 12 } }, required: ['label', 'nilai'] },
+    },
   },
   required: ['ringkasan'],
 };

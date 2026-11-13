@@ -1,23 +1,29 @@
 {
   "riset": {
-    "ringkasan": "Tiga sound sedang naik di FYP; satu cocok untuk konten edukasi koperasi.",
+    "ringkasan": "Sound naik: Negoro Angin & onty onty; format POV/jedag-jedug; kuliner & behind-the-scenes cocok UMKM.",
     "menunggu": [
-      "Pilih sound untuk video minggu ini"
+      "Pilih tren: sound Negoro Angin/onty onty, POV, atau behind-the-scenes?"
     ],
     "angka": [
       {
-        "label": "Tren dicek",
-        "nilai": "24 video"
+        "label": "Sumber relevan",
+        "nilai": "6 sumber"
+      },
+      {
+        "label": "Dibuka penuh",
+        "nilai": "0"
       }
     ]
   },
   "admin": {
-    "ringkasan": "Semua video sudah diputuskan.",
-    "menunggu": [],
+    "ringkasan": "1 video menunggu persetujuanmu sebelum diposting.",
+    "menunggu": [
+      "Setujui posting: tips-menabung-di-koperasi.mp4"
+    ],
     "angka": [
       {
         "label": "Menunggu",
-        "nilai": "0 video"
+        "nilai": "1 video"
       },
       {
         "label": "Disetujui",
@@ -26,14 +32,11 @@
     ]
   },
   "konten": {
-    "ringkasan": "Lima naskah video 30 detik siap; dua sudah masuk tahap edit.",
-    "menunggu": [
-      "Pilih hook untuk video pertama"
-    ],
+    "ringkasan": "1 video baru diberi caption untuk TikTok, Reels, dan Shorts.",
     "angka": [
       {
-        "label": "Naskah siap",
-        "nilai": "5 naskah"
+        "label": "Paket konten",
+        "nilai": "1 video"
       }
     ]
   }
