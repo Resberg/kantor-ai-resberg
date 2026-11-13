@@ -6,6 +6,18 @@ Dibuat dengan React + Three.js (bentuk sederhana, tanpa model 3D, jadi ringan di
 
 Diambil dari halaman "Kantor" di **Imagiive Lapor**, sistem laporan internal Imagiive Group, tempat agen AI kami melapor setiap hari.
 
+## Pakai tanpa terminal (Koperasi Merdeka Resberg)
+
+1. Klik dua kali **`Buka Kantor AI.bat`**. Kantor terbuka di browser. Biarkan jendela hitamnya terbuka; tutup untuk mematikan kantor.
+2. Taruh video baru di folder **`konten\masuk`** (opsional: file `<nama video>.txt` berisi satu kalimat isi videonya).
+3. Di kantor, klik nama agen:
+   - **Suruh kerja sekarang**: Rani cari tren, Laras bikin caption untuk video baru, Dimas menyusun antrean persetujuan.
+   - **Chat**: tanya atau suruh agen. Kalau hasilnya perlu keputusanmu, muncul di Mission Board.
+   - Di jendela **Dimas**: **Salin caption** (TikTok / Reels / Shorts) dan **✓ Setujui / ✕ Tolak** tiap video.
+4. Posting videonya sendiri di aplikasi, tempel caption yang sudah disalin.
+
+Butuh Node.js dan Claude Code yang sudah login di laptop ini. Chat dan tombol agen hanya ada di laptop (bukan di versi web).
+
 ## Mulai
 
 Butuh [Node.js](https://nodejs.org) 20+.

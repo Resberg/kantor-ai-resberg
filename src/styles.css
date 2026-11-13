@@ -12,6 +12,23 @@ body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; overflow: hidden
 .ko-sheet-urgent { color: #c4173f; font-weight: 600; }
 .ko-sheet-in button { margin-top: 8px; padding: 10px 16px; border: 0; border-radius: 10px; background: #271b3f; color: #fff; font: inherit; cursor: pointer; }
 .ko-urgent { font-size: 14px; }
+/* Chat & tombol agen (hanya npm run dev) */
+.ko-sheet-in { max-height: calc(100dvh - 32px); overflow: auto; }
+.ko-agen { display: grid; gap: 10px; margin-top: 12px; }
+.ko-agen button:disabled { opacity: 0.5; cursor: default; }
+.ko-paket { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.ko-paket li { padding: 10px; border-radius: 12px; background: #f4f1f9; }
+.ko-paket p { margin: 4px 0; font-size: 0.8125rem; color: #4b4363; }
+.ko-paket div { display: flex; flex-wrap: wrap; gap: 6px; }
+.ko-sheet-in .ko-paket button { margin-top: 0; padding: 6px 10px; font-size: 0.8125rem; }
+.ko-chat { display: grid; gap: 6px; max-height: 240px; overflow: auto; }
+.ko-chat p { margin: 0; padding: 8px 12px; border-radius: 12px; background: #f4f1f9; white-space: pre-wrap; justify-self: start; }
+.ko-chat p[data-dari="aku"] { justify-self: end; background: #271b3f; color: #fff; }
+.ko-chat p[data-dari="sibuk"] { color: #6a6380; font-style: italic; background: none; }
+.ko-agen form { display: flex; gap: 8px; }
+.ko-agen input { flex: 1; min-width: 0; padding: 10px 12px; border: 1px solid #d9d3e6; border-radius: 10px; font: inherit; }
+.ko-sheet-in .ko-agen form button { margin-top: 0; }
+
 /* Kantor AI: label, gelembung, HUD, Mission Board */
 .ko {
   display: grid;

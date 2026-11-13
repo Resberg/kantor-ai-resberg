@@ -1,22 +1,22 @@
 {
   "riset": {
-    "ringkasan": "Sound naik: Negoro Angin & onty onty; format POV/jedag-jedug; kuliner & behind-the-scenes cocok UMKM.",
+    "ringkasan": "Sound Negoro Angin (Wahyu DTX) teratas; format pack-order dan day-in-the-life cocok; data mingguan belum pasti",
     "menunggu": [
-      "Pilih tren: sound Negoro Angin/onty onty, POV, atau behind-the-scenes?"
+      "Pilih: sound Negoro Angin, atau format pack-order/day-in-the-life?"
     ],
     "angka": [
       {
-        "label": "Sumber relevan",
-        "nilai": "6 sumber"
+        "label": "Sumber dicek",
+        "nilai": "8 sumber"
       },
       {
-        "label": "Dibuka penuh",
-        "nilai": "0"
+        "label": "Pencarian",
+        "nilai": "3 kali"
       }
     ]
   },
   "admin": {
-    "ringkasan": "1 video menunggu persetujuanmu sebelum diposting.",
+    "ringkasan": "1 video menunggu persetujuanmu: tips-menabung-di-koperasi.mp4.",
     "menunggu": [
       "Setujui posting: tips-menabung-di-koperasi.mp4"
     ],
@@ -32,7 +32,7 @@
     ]
   },
   "konten": {
-    "ringkasan": "1 video baru diberi caption untuk TikTok, Reels, dan Shorts.",
+    "ringkasan": "Tidak ada video baru di konten/masuk.",
     "angka": [
       {
         "label": "Paket konten",

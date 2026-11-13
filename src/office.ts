@@ -1,5 +1,5 @@
 /** Logika kantor (murni, dites di scripts/test.mjs): siapa sedang apa jam berapa, timelapse, dan aktivitas santai. */
-import { AGEN, BABAK, JADWAL, JAM_KANTOR, LAPORAN, type Agen, type RoomKey } from './config';
+import { AGEN, BABAK, JADWAL, JAM_KANTOR, LAPORAN, type Agen, type Laporan, type RoomKey } from './config';
 
 export type Activity = 'kerja' | 'laporan' | 'belajar' | 'siaga' | 'pulang';
 export interface Doing {
@@ -48,9 +48,10 @@ export const isNight = (time: string) => toMin(time) >= toMin('18:30') || toMin(
 
 const clip = (s: string, n: number) => (s.length <= n ? s : `${s.slice(0, n - 1).replace(/\s+\S*$/, '')}…`);
 
-export function officeDesks(hari: number, time: string, selaluKerja = false): DeskState[] {
+/** `laporan`: isi terbaru dari laptop (npm run dev); tanpa itu dipakai src/laporan.json saat build. */
+export function officeDesks(hari: number, time: string, selaluKerja = false, laporan: Record<string, Laporan> = LAPORAN): DeskState[] {
   return AGEN.map((a) => {
-    const r = LAPORAN[a.key] ?? {};
+    const r = laporan[a.key] ?? {};
     return {
       desk: { key: a.key, room: a.ruang, color: a.warna, x: a.x, z: a.z },
       agen: a,
@@ -62,10 +63,10 @@ export function officeDesks(hari: number, time: string, selaluKerja = false): De
   });
 }
 
-export function missionBoard(desks: readonly DeskState[]) {
+export function missionBoard(desks: readonly DeskState[], laporan: Record<string, Laporan> = LAPORAN) {
   return {
     items: desks.flatMap((d) => d.waiting.map((text) => ({ key: d.agen.key, name: d.agen.nama, color: d.agen.warna, text }))),
-    metrics: desks.flatMap((d) => (LAPORAN[d.agen.key]?.angka ?? []).map((m) => ({ ...m, name: d.agen.nama }))),
+    metrics: desks.flatMap((d) => (laporan[d.agen.key]?.angka ?? []).map((m) => ({ ...m, name: d.agen.nama }))),
   };
 }
 

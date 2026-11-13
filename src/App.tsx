@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { GAYA, KANTOR, TAMPIL_PEMILIH_GAYA } from './config';
+import { GAYA, KANTOR, LAPORAN, TAMPIL_PEMILIH_GAYA, type Laporan } from './config';
 import { DAFTAR_GAYA, KUNCI_SIMPAN, cariGaya, gayaAwal, type GayaId } from './gaya/daftar';
 import { IDLE_LABEL, idleAt, isNight, isoDay, lapseAt, missionBoard, officeDesks, params as readParams, type DeskState, type IdleSpot } from './office';
 
@@ -14,7 +14,17 @@ export default function App() {
   const p = useMemo(() => readParams(new URLSearchParams(location.search)), []);
   const [now, setNow] = useState(() => new Date());
   const [t, setT] = useState(0);
-  const [open, setOpen] = useState<DeskState | null>(null);
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  // Laporan terbaru dari laptop (npm run dev): agen menulis src/laporan.json, kantor membacanya tiap 3 detik.
+  const [laporan, setLaporan] = useState<Record<string, Laporan>>(LAPORAN);
+  const [chat, setChat] = useState<Record<string, Pesan[]>>({});
+  const segarkan = () => api<Record<string, Laporan>>('/laporan').then(setLaporan, () => {});
+  useEffect(() => {
+    if (!LOKAL || p.rec) return;
+    void segarkan();
+    const id = window.setInterval(segarkan, 3000);
+    return () => window.clearInterval(id);
+  }, [p.rec]);
   const drive = useRef<((t: number) => void) | null>(null);
   const anchors = useRef(new Map<string, HTMLElement>());
   const boardAnchor = useRef<HTMLElement | null>(null);
@@ -63,8 +73,9 @@ export default function App() {
 
   const lapse = p.lapse ? lapseAt(t) : null;
   const time = lapse?.time ?? p.time ?? hm(now);
-  const desks = officeDesks(isoDay(now), time, p.alwaysWork);
-  const board = missionBoard(desks);
+  const desks = officeDesks(isoDay(now), time, p.alwaysWork, laporan);
+  const board = missionBoard(desks, laporan);
+  const open = desks.find((d) => d.desk.key === openKey) ?? null;
   const night = isNight(time);
   const withBubble = desks.filter((d) => d.bubble);
   const spotKey = withBubble.length ? withBubble[Math.floor(t / 2.5) % withBubble.length]!.desk.key : null;
@@ -97,7 +108,7 @@ export default function App() {
               spot={spotKey === d.desk.key}
               idle={d.doing.activity === 'siaga' ? idleAt(d.desk.key, t).spot : null}
               refFn={(el) => (el ? anchors.current.set(d.desk.key, el) : anchors.current.delete(d.desk.key))}
-              onOpen={() => setOpen(d)}
+              onOpen={() => setOpenKey(d.desk.key)}
             />
           ))}
           <span className="ko-board-pin" ref={(el) => void (boardAnchor.current = el)}>
@@ -172,7 +183,7 @@ export default function App() {
       )}
 
       {open && (
-        <div className="ko-sheet" role="dialog" aria-label={open.agen.nama} onClick={() => setOpen(null)}>
+        <div className="ko-sheet" role="dialog" aria-label={open.agen.nama} onClick={() => setOpenKey(null)}>
           <div className="ko-sheet-in" onClick={(e) => e.stopPropagation()}>
             <h3>
               {open.agen.nama} <small>{open.agen.tugas}</small>
@@ -189,12 +200,122 @@ export default function App() {
                 ))}
               </ul>
             )}
-            <button type="button" onClick={() => setOpen(null)}>
+            {LOKAL && (
+              <AgenPanel
+                k={open.desk.key}
+                nama={open.agen.nama}
+                log={chat[open.desk.key] ?? []}
+                setLog={(fn) => setChat((c) => ({ ...c, [open.desk.key]: fn(c[open.desk.key] ?? []) }))}
+                segarkan={segarkan}
+              />
+            )}
+            <button type="button" onClick={() => setOpenKey(null)}>
               Tutup
             </button>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Chat & tombol agen hanya ada di laptop sendiri (npm run dev); versi web (GitHub Pages) hanya menampilkan. */
+const LOKAL = import.meta.env.DEV;
+type Pesan = { dari: 'aku' | 'agen'; teks: string };
+type Paket = { video: string; status: string; caption: { tiktok: string; instagram: string; youtube_judul: string; youtube_deskripsi: string } };
+
+async function api<T>(jalur: string, isi?: unknown): Promise<T> {
+  const r = await fetch(`/api${jalur}`, isi === undefined ? undefined : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(isi) });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error ?? 'Gagal');
+  return j as T;
+}
+
+function AgenPanel({ k, nama, log, setLog, segarkan }: { k: string; nama: string; log: Pesan[]; setLog: (fn: (l: Pesan[]) => Pesan[]) => void; segarkan: () => void }) {
+  const [pesan, setPesan] = useState('');
+  const [sibuk, setSibuk] = useState<string | null>(null);
+  const [paket, setPaket] = useState<Paket[]>([]);
+  const muatPaket = () => api<Paket[]>('/paket').then(setPaket, () => {});
+  useEffect(() => {
+    void muatPaket();
+  }, [k]);
+  const tambah = (m: Pesan) => setLog((l) => [...l, m]);
+  const lakukan = async (label: string, kerja: () => Promise<void>) => {
+    setSibuk(label);
+    try {
+      await kerja();
+    } catch (e) {
+      tambah({ dari: 'agen', teks: `⚠ ${e instanceof Error ? e.message : String(e)}` });
+    } finally {
+      setSibuk(null);
+      segarkan();
+      void muatPaket();
+    }
+  };
+  const kirim = (e: React.FormEvent) => {
+    e.preventDefault();
+    const teks = pesan.trim();
+    if (!teks || sibuk) return;
+    setPesan('');
+    tambah({ dari: 'aku', teks });
+    void lakukan(`${nama} sedang membalas…`, async () => {
+      const r = await api<{ balasan: string }>('/chat', { agen: k, pesan: teks, riwayat: log });
+      tambah({ dari: 'agen', teks: r.balasan });
+    });
+  };
+  const putuskan = (video: string, aksi: string) => void lakukan('Menyimpan…', async () => void (await api('/putuskan', { video, aksi })));
+  // Laras & Dimas menampilkan video yang menunggu; hanya Dimas yang memutuskan.
+  const tunggu = k === 'riset' ? [] : paket.filter((x) => x.status === 'menunggu');
+  return (
+    <div className="ko-agen">
+      <button type="button" disabled={!!sibuk} onClick={() => void lakukan(`${nama} sedang bekerja…`, async () => void (await api('/kerja', { agen: k })))}>
+        Suruh kerja sekarang
+      </button>
+      {tunggu.length > 0 && (
+        <ul className="ko-paket">
+          {tunggu.map((x) => (
+            <li key={x.video}>
+              <b>{x.video}</b>
+              <p>{x.caption.tiktok.slice(0, 140)}…</p>
+              <div>
+                <button type="button" onClick={() => void navigator.clipboard.writeText(x.caption.tiktok)}>
+                  Salin caption TikTok
+                </button>
+                <button type="button" onClick={() => void navigator.clipboard.writeText(x.caption.instagram)}>
+                  Salin caption Reels
+                </button>
+                <button type="button" onClick={() => void navigator.clipboard.writeText(`${x.caption.youtube_judul}\n\n${x.caption.youtube_deskripsi}`)}>
+                  Salin Shorts
+                </button>
+                {k === 'admin' && (
+                  <>
+                    <button type="button" disabled={!!sibuk} onClick={() => putuskan(x.video, 'setuju')}>
+                      ✓ Setujui
+                    </button>
+                    <button type="button" disabled={!!sibuk} onClick={() => putuskan(x.video, 'tolak')}>
+                      ✕ Tolak
+                    </button>
+                  </>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="ko-chat" aria-live="polite">
+        {log.map((m, i) => (
+          <p key={i} data-dari={m.dari}>
+            {m.teks}
+          </p>
+        ))}
+        {sibuk && <p data-dari="sibuk">{sibuk}</p>}
+      </div>
+      <form onSubmit={kirim}>
+        <input value={pesan} onChange={(e) => setPesan(e.target.value)} placeholder={`Tulis pesan untuk ${nama}…`} aria-label={`Pesan untuk ${nama}`} disabled={!!sibuk} />
+        <button type="submit" disabled={!!sibuk || !pesan.trim()}>
+          Kirim
+        </button>
+      </form>
     </div>
   );
 }
