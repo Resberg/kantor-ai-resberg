@@ -11,7 +11,8 @@ Diambil dari halaman "Kantor" di **Imagiive Lapor**, sistem laporan internal Ima
 1. Klik dua kali **`Buka Kantor AI.bat`**. Kantor terbuka di browser. Biarkan jendela hitamnya terbuka; tutup untuk mematikan kantor.
 2. Taruh video baru di folder **`konten\masuk`** (opsional: file `<nama video>.txt` berisi satu kalimat isi videonya).
 3. Di kantor, klik nama agen:
-   - **Suruh kerja sekarang**: Rani cari tren, Laras bikin caption untuk video baru, Dimas menyusun antrean persetujuan.
+   - **Resberg** (kepala divisi): chat untuk memberi tema ("Tema minggu ini: …"), lalu **Suruh kerja sekarang**. Resberg menentukan tema (kalau belum kamu beri) dan menyuruh Rani, Laras, dan Dimas mengerjakannya berurutan (±2–3 menit). Laras menyiapkan 3 ide video untuk tema itu di Mission Board.
+   - **Suruh kerja sekarang** di agen lain: Rani cari tren, Laras bikin caption untuk video baru, Dimas menyusun antrean persetujuan; semuanya mengikuti tema Resberg.
    - **Chat**: tanya atau suruh agen. Kalau hasilnya perlu keputusanmu, muncul di Mission Board.
    - Di jendela **Dimas**: **Salin caption** (TikTok / Reels / Shorts) dan **✓ Setujui / ✕ Tolak** tiap video.
 4. Posting videonya sendiri di aplikasi, tempel caption yang sudah disalin.

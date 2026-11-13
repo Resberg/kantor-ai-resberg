@@ -1,8 +1,17 @@
 {
+  "kepala": {
+    "ringkasan": "Tema tim: Tips menabung untuk anak muda yang baru kerja",
+    "angka": [
+      {
+        "label": "Tema sejak",
+        "nilai": "13/11"
+      }
+    ]
+  },
   "riset": {
-    "ringkasan": "Sound Negoro Angin (Wahyu DTX) teratas; format pack-order dan day-in-the-life cocok; data mingguan belum pasti",
+    "ringkasan": "Negoro Angin masih ramai (data 28 Okt), konten proses/keseharian didukung, tapi koperasi belum terbukti.",
     "menunggu": [
-      "Pilih: sound Negoro Angin, atau format pack-order/day-in-the-life?"
+      "Pilih versi sound Negoro Angin; cek dulu di TikTok Creative Center."
     ],
     "angka": [
       {
@@ -10,13 +19,13 @@
         "nilai": "8 sumber"
       },
       {
-        "label": "Pencarian",
-        "nilai": "3 kali"
+        "label": "Data minggu ini",
+        "nilai": "0"
       }
     ]
   },
   "admin": {
-    "ringkasan": "1 video menunggu persetujuanmu: tips-menabung-di-koperasi.mp4.",
+    "ringkasan": "1 video menunggu persetujuanmu sebelum diposting.",
     "menunggu": [
       "Setujui posting: tips-menabung-di-koperasi.mp4"
     ],
@@ -32,7 +41,12 @@
     ]
   },
   "konten": {
-    "ringkasan": "Tidak ada video baru di konten/masuk.",
+    "ringkasan": "Tidak ada video baru. 3 ide untuk tema \"Day-in-the-life pengurus koperasi + sound Negoro Angin\" siap.",
+    "menunggu": [
+      "Pilih ide: Sehari Jadi Pengurus Koperasi",
+      "Pilih ide: Di Balik Meja Pengurus Koperasi",
+      "Pilih ide: Rapat Anggota, Kopi, dan Catatan"
+    ],
     "angka": [
       {
         "label": "Paket konten",

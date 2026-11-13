@@ -23,7 +23,7 @@ export const TAMPIL_PEMILIH_GAYA = true;
 /** Tiga ruangan dari kiri ke kanan. Lebarnya ikut `x0`–`x1` (meter), lantainya `warna`, karpetnya `karpet`. */
 export const RUANGAN = [
   { key: 'bizdev', label: 'Riset', x0: -7, x1: -1.8, warna: '#e9d9c4', karpet: '#e4572e' },
-  { key: 'keuangan', label: 'Admin', x0: -1.8, x1: 2, warna: '#efe3cf', karpet: '#f2b134' },
+  { key: 'keuangan', label: 'Kepala & Admin', x0: -1.8, x1: 2, warna: '#efe3cf', karpet: '#f2b134' },
   { key: 'studio', label: 'Konten', x0: 2, x1: 7, warna: '#e3d6c6', karpet: '#3a86ff' },
 ] as const;
 export type RoomKey = (typeof RUANGAN)[number]['key'];
@@ -41,10 +41,11 @@ export interface Agen {
   z: number;
 }
 
-/** Tiga agen, satu per ruangan (tengah ruangan, tidak bertumpuk). */
+/** Empat agen: Resberg (kepala divisi) memberi tema, tiga lainnya mengerjakannya. Resberg & Dimas berbagi ruang tengah. */
 export const AGEN: Agen[] = [
+  { key: 'kepala', nama: 'Resberg', tugas: 'Kepala divisi: tema tim', ruang: 'keuangan', warna: '#2b2b2b', x: 1.0, z: -1.4 },
   { key: 'riset', nama: 'Rani', tugas: 'Riset tren TikTok', ruang: 'bizdev', warna: '#e4572e', x: -4.4, z: -0.2 },
-  { key: 'admin', nama: 'Dimas', tugas: 'Klien, brief & jadwal', ruang: 'keuangan', warna: '#f2b134', x: 0.1, z: -0.2 },
+  { key: 'admin', nama: 'Dimas', tugas: 'Klien, brief & jadwal', ruang: 'keuangan', warna: '#f2b134', x: -0.8, z: -1.4 },
   { key: 'konten', nama: 'Laras', tugas: 'Naskah & edit video', ruang: 'studio', warna: '#3a86ff', x: 4.5, z: -0.2 },
 ];
 
@@ -52,6 +53,7 @@ export type Aktivitas = 'kerja' | 'laporan' | 'belajar';
 
 /** Jadwal kerja (WIB). `agen: '*'` = semua agen. `hari` 1 = Senin … 7 = Minggu. `menit` = lama tampil. */
 export const JADWAL: { agen: string[] | '*'; mulai: string; menit: number; hari: number[]; aktivitas: Aktivitas; label: string }[] = [
+  { agen: ['kepala'], mulai: '07:30', menit: 25, hari: [1, 2, 3, 4, 5], aktivitas: 'kerja', label: 'menentukan tema tim…' },
   { agen: ['admin'], mulai: '07:32', menit: 25, hari: [1, 2, 3, 4, 5], aktivitas: 'kerja', label: 'merapikan DM & email klien…' },
   { agen: ['riset'], mulai: '07:57', menit: 30, hari: [1, 2, 3, 4, 5], aktivitas: 'kerja', label: 'cek sound & tren FYP…' },
   { agen: ['konten'], mulai: '08:05', menit: 30, hari: [1, 2, 3, 4, 5], aktivitas: 'kerja', label: 'menulis naskah video…' },

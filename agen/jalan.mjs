@@ -1,6 +1,6 @@
 // Agen sungguhan: tiap agen bekerja lewat `claude -p` lalu menulis hasilnya ke src/laporan.json (kantor membacanya).
 // Dipakai dari kantor (tombol "Suruh kerja" & chat, lewat vite.config.ts) atau dari terminal:
-//        node agen/jalan.mjs            -> semua agen berurutan (riset, konten, admin)
+//        node agen/jalan.mjs            -> Resberg memberi tema, lalu Rani, Laras, Dimas mengerjakannya
 //        node agen/jalan.mjs riset      -> satu agen saja
 import { execFile } from 'node:child_process';
 import fs from 'node:fs';
@@ -12,6 +12,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const LAPORAN = path.join(ROOT, 'src/laporan.json');
 export const MASUK = path.join(ROOT, 'konten/masuk');
 export const SIAP = path.join(ROOT, 'konten/siap');
+const TEMA = path.join(ROOT, 'konten/tema.json');
 const BISNIS = 'Koperasi Merdeka Resberg, usaha kreatif konten TikTok (juga Instagram Reels dan YouTube Shorts)';
 const VIDEO = /\.(mp4|mov|webm)$/i;
 
@@ -83,9 +84,28 @@ const LAPORAN_SCHEMA = {
   required: ['ringkasan'],
 };
 
+/** Tema dari Resberg (kepala divisi), dipakai semua agen. null kalau belum ada. */
+export function bacaTema(file = TEMA) {
+  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
+}
+
+function simpanTema(tema, alasan) {
+  fs.mkdirSync(path.dirname(TEMA), { recursive: true });
+  const isi = { tema: potong(tema, 60), alasan: potong(alasan ?? '', 200), dibuat: new Date().toISOString() };
+  fs.writeFileSync(TEMA, JSON.stringify(isi, null, 2) + '\n');
+  tulisLaporan('kepala', { ringkasan: `Tema tim: ${isi.tema}`, angka: [{ label: 'Tema sejak', nilai: isi.dibuat.slice(5, 10).split('-').reverse().join('/') }] });
+  return isi;
+}
+
+/** Kalimat arahan tema untuk prompt agen; kosong kalau Resberg belum memberi tema. */
+export function arahTema(t) {
+  return t?.tema ? `Tema dari Resberg (kepala divisi) yang wajib kamu ikuti: "${t.tema}"${t.alasan ? ` (alasan: ${t.alasan})` : ''}. ` : '';
+}
+
 async function riset() {
   const hasil = await tanya(
-    `Kamu Rani, agen riset tren untuk ${BISNIS}. Cari di web tren TikTok minggu ini (sound, format, topik) yang cocok untuk akun koperasi/UMKM di Indonesia. ` +
+    `Kamu Rani, agen riset tren untuk ${BISNIS}. ${arahTema(bacaTema())}Cari di web tren TikTok minggu ini (sound, format, topik) yang cocok untuk akun koperasi/UMKM di Indonesia` +
+      `${bacaTema() ? ' dan untuk tema itu' : ''}. ` +
       'Laporkan dalam bahasa Indonesia: ringkasan satu kalimat berisi 3 temuan terpenting, `menunggu` berisi 1 keputusan untuk pemilik (mis. tren mana yang dipakai), ' +
       '`angka` berisi jumlah sumber yang dicek. Jangan mengarang; kalau tidak yakin, katakan.',
     LAPORAN_SCHEMA,
@@ -128,8 +148,23 @@ async function konten() {
     fs.writeFileSync(path.join(SIAP, `${f}.json`), JSON.stringify(paket, null, 2) + '\n');
     console.log(`[konten] paket siap: konten/siap/${f}.json`);
   }
+  // Ada tema dari Resberg: Laras juga menyiapkan 3 ide video untuk tema itu (pilihannya masuk Mission Board).
+  const t = bacaTema();
+  let ide = [];
+  if (t) {
+    ({ ide } = await tanya(
+      `Kamu Laras, agen konten untuk ${BISNIS}. ${arahTema(t)}Temuan tren dari Rani: ${JSON.stringify(bacaLaporan().riset ?? {})}. ` +
+        'Buat 3 ide video TikTok 30 detik untuk tema itu. Tiap ide: judul pendek dan hook kalimat pertama. Jangan menjanjikan keuntungan uang.',
+      { type: 'object', properties: { ide: { type: 'array', maxItems: 3, items: { type: 'object', properties: { judul: { type: 'string', maxLength: 50 }, hook: { type: 'string' } }, required: ['judul', 'hook'] } } }, required: ['ide'] },
+    ));
+    fs.writeFileSync(path.join(path.dirname(TEMA), 'ide.json'), JSON.stringify({ tema: t.tema, ide }, null, 2) + '\n');
+  }
   tulisLaporan('konten', {
-    ringkasan: baru.length ? `${baru.length} video baru diberi caption untuk TikTok, Reels, dan Shorts.` : 'Tidak ada video baru di konten/masuk.',
+    ringkasan: [
+      baru.length ? `${baru.length} video baru diberi caption.` : 'Tidak ada video baru.',
+      ide.length ? `${ide.length} ide untuk tema "${t.tema}" siap.` : '',
+    ].join(' ').trim(),
+    ...(ide.length && { menunggu: ide.map((x) => `Pilih ide: ${x.judul}`) }),
     angka: [{ label: 'Paket konten', nilai: `${daftarPaket().length} video` }],
   });
   // Video baru langsung masuk antrean persetujuan di Mission Board.
@@ -156,12 +191,41 @@ export function laporanAdmin(paket) {
 }
 
 const PERAN = {
+  kepala: 'Resberg, kepala divisi kreatif yang menentukan tema untuk Rani (riset), Laras (konten), dan Dimas (admin)',
   riset: 'Rani, agen riset tren TikTok',
   admin: 'Dimas, agen admin: klien, brief, dan jadwal posting',
   konten: 'Laras, agen konten: ide, naskah, dan caption video',
 };
-const AGEN = { riset, konten, admin: async () => tulisLaporan('admin', laporanAdmin(daftarPaket())) };
+const TIM = ['riset', 'konten', 'admin'];
 const sibuk = new Set();
+
+/** Resberg: tentukan tema dari temuan terakhir, lalu suruh tim mengerjakannya berurutan. */
+async function kepala() {
+  const l = bacaLaporan();
+  const lama = bacaTema();
+  const { tema, alasan } = await tanya(
+    `Kamu ${PERAN.kepala} untuk ${BISNIS}. Tema sebelumnya: ${lama?.tema ?? '(belum ada)'}. ` +
+      `Laporan tim terakhir: ${JSON.stringify({ riset: l.riset, konten: l.konten, admin: l.admin })}. ` +
+      'Tentukan SATU tema konten untuk tim minggu ini (maks 60 karakter) dan alasannya satu kalimat. Hindari klaim keuntungan uang.',
+    { type: 'object', properties: { tema: { type: 'string', maxLength: 60 }, alasan: { type: 'string', maxLength: 200 } }, required: ['tema', 'alasan'] },
+  );
+  const t = simpanTema(tema, alasan);
+  const gagal = [];
+  for (const k of TIM) {
+    try {
+      await jalankan(k);
+    } catch (e) {
+      gagal.push(`${k}: ${e.message}`);
+    }
+  }
+  tulisLaporan('kepala', {
+    ringkasan: `Tema tim: ${t.tema}. ${gagal.length ? `${gagal.length} agen gagal.` : 'Tim sudah mengerjakannya.'}`,
+    ...(gagal.length && { mendesak: gagal }),
+    angka: [{ label: 'Agen dikerahkan', nilai: `${TIM.length - gagal.length} dari ${TIM.length}` }],
+  });
+}
+
+const AGEN = { kepala, riset, konten, admin: async () => tulisLaporan('admin', laporanAdmin(daftarPaket())) };
 
 /** Satu kerja per agen sekaligus: klik "Suruh kerja" dua kali tidak membuat kerja ganda. */
 async function giliran(key, kerja) {
@@ -195,15 +259,21 @@ export const ngobrol = (key, pesan, riwayat = []) =>
       .map((m) => `${m.dari === 'aku' ? 'Pemilik' : 'Kamu'}: ${m.teks}`)
       .join('\n');
     const sekarang = JSON.stringify(bacaLaporan()[key] ?? {});
+    const kepala = key === 'kepala';
+    const schema = kepala
+      ? { ...CHAT_SCHEMA, properties: { ...CHAT_SCHEMA.properties, tema: { type: 'string', maxLength: 60, description: 'Isi HANYA kalau pemilik menetapkan atau meminta tema baru untuk tim.' }, alasan: { type: 'string', maxLength: 200 } } }
+      : CHAT_SCHEMA;
     const hasil = await tanya(
-      `Kamu ${PERAN[key]} untuk ${BISNIS}. Laporanmu hari ini: ${sekarang}.\n${lalu ? `Percakapan sebelumnya:\n${lalu}\n` : ''}Pemilik: ${pesan}\n` +
+      `Kamu ${PERAN[key]} untuk ${BISNIS}. ${arahTema(bacaTema())}Laporanmu hari ini: ${sekarang}.\n${lalu ? `Percakapan sebelumnya:\n${lalu}\n` : ''}Pemilik: ${pesan}\n` +
+        (kepala ? 'Kalau pemilik memberi tema baru, isi `tema`; tim mengerjakannya saat tombol "Suruh kerja" Resberg ditekan. ' : '') +
         'Jawab sebagai agen itu. Jangan mengarang data; jangan menjanjikan keuntungan uang. ' +
         'Kamu hanya bisa menjawab dan mengisi Mission Board: kamu TIDAK bisa memposting, mengunggah, menjadwalkan, atau menyetujui video. ' +
         'Persetujuan lewat tombol ✓ Setujui / ✕ Tolak di jendela Dimas; posting dilakukan pemilik sendiri.',
-      CHAT_SCHEMA,
+      schema,
       key === 'riset' ? ['WebSearch', 'WebFetch'] : [],
     );
-    if (hasil.laporan?.ringkasan) tulisLaporan(key, hasil.laporan);
+    if (kepala && hasil.tema) simpanTema(hasil.tema, hasil.alasan);
+    else if (hasil.laporan?.ringkasan) tulisLaporan(key, hasil.laporan);
     return hasil.balasan;
   });
 
@@ -225,8 +295,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     console.error(`Agen tidak dikenal: ${pilih}. Pilih: ${Object.keys(AGEN).join(', ')}`);
     process.exit(1);
   }
-  // Berurutan, bukan paralel: semua agen menulis ke laporan.json yang sama.
-  for (const k of pilih ? [pilih] : Object.keys(AGEN)) {
+  // Tanpa pilihan: Resberg memberi tema lalu tim mengerjakannya (berurutan, semua menulis ke laporan.json yang sama).
+  for (const k of pilih ? [pilih] : ['kepala']) {
     try {
       await jalankan(k);
     } catch (e) {

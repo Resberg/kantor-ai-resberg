@@ -37,7 +37,8 @@ t('agen santai pergi dan kembali', () => {
 });
 t('meja dan Mission Board', () => {
   const desks = O.officeDesks(1, '10:00');
-  assert.equal(desks.length, 3);
+  assert.equal(desks.length, 4);
+  assert.equal(O.agentDoing('kepala', 1, '07:31').label, 'menentukan tema tim…');
   assert.ok(desks.every((d) => d.bubble));
   // laporan.json sekarang ditulis agen sungguhan, jadi jumlah butirnya berubah-ubah: cek bentuknya saja.
   assert.ok(O.missionBoard(desks).items.every((it) => it.name && it.text));
@@ -76,5 +77,8 @@ t('agen: baca hasil Claude, gabung laporan, video baru, persetujuan', () => {
   const lap = A.laporanAdmin([{ video: 'a.mp4', status: 'menunggu' }, { video: 'b.mp4', status: 'disetujui' }]);
   assert.deepEqual(lap.menunggu, ['Setujui posting: a.mp4']);
   assert.equal(A.laporanAdmin([]).menunggu.length, 0);
+  assert.equal(A.arahTema(null), '');
+  assert.match(A.arahTema({ tema: 'Hemat akhir bulan', alasan: 'banyak dicari' }), /"Hemat akhir bulan".*banyak dicari/);
+  assert.equal(A.bacaTema(path.join(dir, 'tidak-ada.json')), null);
 });
 console.log(`${n} tes lulus`);
