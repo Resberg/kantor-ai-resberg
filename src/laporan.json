@@ -1,58 +1,39 @@
 {
-  "raka": {
-    "ringkasan": "Enam paket tender baru; dua cocok, satu Rakor Dinas Contoh sedang dikejar.",
+  "riset": {
+    "ringkasan": "Tiga sound sedang naik di FYP; satu cocok untuk konten edukasi koperasi.",
     "menunggu": [
-      "Setujui batch email B012 (30 kontak)"
+      "Pilih sound untuk video minggu ini"
     ],
     "angka": [
       {
-        "label": "Paket baru",
-        "nilai": "6 paket"
+        "label": "Tren dicek",
+        "nilai": "24 video"
       }
     ]
   },
-  "sekar": {
-    "ringkasan": "Tiga kampus contoh membalas penawaran; satu minta sampel.",
+  "admin": {
+    "ringkasan": "Semua video sudah diputuskan.",
+    "menunggu": [],
+    "angka": [
+      {
+        "label": "Menunggu",
+        "nilai": "0 video"
+      },
+      {
+        "label": "Disetujui",
+        "nilai": "0 video"
+      }
+    ]
+  },
+  "konten": {
+    "ringkasan": "Lima naskah video 30 detik siap; dua sudah masuk tahap edit.",
     "menunggu": [
-      "Kirim sampel ke Kampus Contoh?"
+      "Pilih hook untuk video pertama"
     ],
     "angka": [
       {
-        "label": "Calon klien",
-        "nilai": "12 kontak"
-      }
-    ]
-  },
-  "gilang": {
-    "ringkasan": "Brief video Festival Contoh masuk; storyboard awal disiapkan.",
-    "mendesak": [
-      "Tenggat penawaran Festival Contoh besok 10.00"
-    ]
-  },
-  "riska": {
-    "ringkasan": "212 email dirapikan; dua email phishing ditandai.",
-    "menunggu": [
-      "Periksa draf invoice termin 2"
-    ],
-    "angka": [
-      {
-        "label": "Email dilabel",
-        "nilai": "212 email"
-      }
-    ]
-  },
-  "esok": {
-    "ringkasan": "Tiga alternatif konsep Rakor Dinas Contoh selesai.",
-    "menunggu": [
-      "Pilih konsep Rakor Dinas Contoh"
-    ]
-  },
-  "lita": {
-    "ringkasan": "Deck 14 slide Festival Contoh siap ditinjau.",
-    "angka": [
-      {
-        "label": "Desain selesai",
-        "nilai": "4 berkas"
+        "label": "Naskah siap",
+        "nilai": "5 naskah"
       }
     ]
   }

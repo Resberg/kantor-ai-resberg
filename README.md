@@ -73,6 +73,23 @@ Tiap gaya satu file di `src/gaya/<id>.ts`; daftar namanya di `src/gaya/daftar.ts
 
 Laporan agen dibaca dari **`src/laporan.json`** (sekarang data contoh). Kuncinya sama dengan `key` di `AGEN`, isinya `ringkasan`, `menunggu`, `mendesak`, dan `angka`. Suruh agenmu (Antigravity, Claude Code, dll.) menulis laporannya ke file ini setiap sore; kantornya langsung berubah. Jangan tampilkan nominal uang atau data rahasia kalau videonya mau dibagikan.
 
+### Agen sungguhan (Claude Code)
+
+Ketiga agen di kantor ini bekerja sungguhan lewat `claude -p` (pakai login Claude Code di laptop ini, tanpa API key):
+
+| Agen | Kerja | Hasil |
+|---|---|---|
+| Rani (`riset`) | Cari tren TikTok minggu ini di web | 3 temuan + 1 keputusan di Mission Board |
+| Laras (`konten`) | Tiap video baru di `konten/masuk/` diberi caption TikTok, Reels, dan judul/deskripsi Shorts | `konten/siap/<video>.json` |
+| Dimas (`admin`) | Video yang belum disetujui jadi butir "menunggu" | Mission Board |
+
+1. Sekali saja: buka terminal, jalankan `claude`, lalu ketik `/login`.
+2. Taruh video di `konten/masuk/`. Opsional: tulis isi videonya di `<nama video>.txt` di sebelahnya (Claude tidak menonton video).
+3. `npm run agen` (semua) atau `npm run agen -- riset` (satu agen). Kantor di `npm run dev` langsung berubah.
+4. Setujui: `npm run setuju -- <nama video>` (atau `... <nama video> tolak`).
+
+Posting otomatis ke TikTok/Instagram/YouTube belum ada: tiap platform butuh aplikasi developer dan token milikmu sendiri. Folder `konten/` tidak ikut ke git.
+
 ## Rekam jadi video
 
 Butuh Google Chrome dan [ffmpeg](https://ffmpeg.org) (`brew install ffmpeg` di Mac). Biarkan `npm run dev` jalan, lalu di terminal lain:

@@ -8,7 +8,9 @@
     "dev": "vite --port 5173",
     "build": "tsc -b && vite build",
     "test": "node scripts/test.mjs",
-    "rekam": "node scripts/rekam.mjs"
+    "rekam": "node scripts/rekam.mjs",
+    "agen": "node agen/jalan.mjs",
+    "setuju": "node agen/setuju.mjs"
   },
   "dependencies": {
     "react": "^19.3.0",
